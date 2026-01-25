@@ -1,0 +1,221 @@
+.login-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.75); /* Darker backdrop for focus */
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.login-modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 420px;
+  padding: 40px;
+  border-radius: 20px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.close-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  padding: 5px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+}
+
+.close-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.login-header h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.login-header p {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.forgot-pass {
+  font-size: 0.8rem;
+  color: #dc2626;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+}
+
+.input-container input {
+  width: 100%;
+  padding: 12px 12px 12px 40px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.input-container input:focus {
+  outline: none;
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+.eye-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+.login-submit-btn {
+  background: #dc2626;
+  color: white !important; /* Force white text */
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  margin-top: 10px;
+}
+
+.login-submit-btn:hover {
+  background: #b91c1c;
+}
+
+.login-footer {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.signup-trigger {
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-page-container {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at top, #fff1f2 0%, #f8fafc 100%);
+  padding: 20px;
+}
+
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  padding: 48px;
+  border-radius: 24px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+  border: 1px solid #e2e8f0;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 32px;
+  cursor: pointer;
+}
+
+.login-brand span {
+  font-weight: 800;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.brand-icon {
+  background: #dc2626;
+  color: white;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+}
+
+/* ... keep the rest of your previous Login.css styles for form-field, input, and buttons ... */
+
+.login-submit-btn {
+  background: #dc2626;
+  color: white !important;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  margin-top: 10px;
+}
+
+.login-submit-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}

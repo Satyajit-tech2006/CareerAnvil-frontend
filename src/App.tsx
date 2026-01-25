@@ -4,18 +4,22 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import Home from "./pages/Home"; // Ensure you created this file from the previous step
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import JobBoard from "./pages/JobBoard";
 import ResumeScanner from "./pages/ResumeScanner";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import Roadmaps from "./pages/Roadmaps";
 import NotFound from "./pages/NotFound";
+import Login from "./components/Auth/Login.jsx";
 
 const queryClient = new QueryClient();
 
-// Placeholder for future Auth logic
-// Once we connect the Node.js backend, we will check for a valid token here
+/**
+ * ProtectedRoute Component
+ * Currently defaults to true for development. 
+ * Redirects to the landing page if the user is not authenticated.
+ */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const isAuthenticated = true; // Set to false to test redirecting to Home
   if (!isAuthenticated) {
@@ -31,11 +35,13 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* --- PUBLIC ROUTE (Landing Page) --- */}
-          {/* This sits OUTSIDE AppLayout so it doesn't have the sidebar */}
+          {/* --- PUBLIC ROUTES --- */}
+          {/* These routes do not display the sidebar or topbar navigation */}
           <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
 
-          {/* --- PROTECTED ROUTES (Dashboard Ecosystem) --- */}
+          {/* --- PROTECTED ROUTES --- */}
+          {/* These routes are wrapped in AppLayout for the sidebar ecosystem */}
           <Route
             element={
               <ProtectedRoute>
@@ -43,7 +49,7 @@ const App = () => (
               </ProtectedRoute>
             }
           >
-            {/* The user lands here after logging in */}
+            {/* Main application features */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/jobs" element={<JobBoard />} />
             <Route path="/scanner" element={<ResumeScanner />} />

@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 
 // Import the dedicated stylesheet
-import "../../src/styles/Home.css"
+import "../styles/Home.css"
 const Home = () => {
   const navigate = useNavigate()
 
@@ -55,9 +55,13 @@ const Home = () => {
               <button onClick={() => navigate("/login")} className="btn btn-ghost">
                 Log in
               </button>
-              <button onClick={() => navigate("/signup")} className="btn btn-primary">
-                Get Started
-              </button>
+              <button 
+  onClick={() => navigate("/signup")} 
+  className="btn btn-primary"
+  style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+>
+  Get Started
+</button>
             </div>
           </div>
         </div>
@@ -84,9 +88,13 @@ const Home = () => {
             </p>
 
             <div className="hero-cta">
-              <button className="btn btn-primary btn-lg" onClick={() => navigate("/signup")}>
-                Start Preparing Now <ArrowRight size={20} style={{ marginLeft: '8px' }} />
-              </button>
+              <button 
+  className="btn btn-primary btn-lg" 
+  onClick={() => navigate("/signup")}
+  style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+>
+  Start Preparing Now <ArrowRight size={20} style={{ marginLeft: '8px', color: '#ffffff' }} />
+</button>
               <button className="btn btn-outline btn-lg" onClick={() => navigate("/jobs")}>
                 Explore Jobs
               </button>
