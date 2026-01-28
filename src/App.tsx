@@ -11,19 +11,22 @@ import ResumeScanner from "./pages/ResumeScanner";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import Roadmaps from "./pages/Roadmaps";
 import NotFound from "./pages/NotFound";
-import Login from "./components/Auth/Login";   
+import Login from "./components/Auth/Login"; 
 import Signup from "./components/Auth/Signup"; 
+import AuthSuccess from "./pages/AuthSuccess";
 
 const queryClient = new QueryClient();
 
 /**
  * ProtectedRoute Component
- * Checks local storage for user data. 
- * If no user is found, redirects to the Login page.
+ * Checks local storage for authentication tokens. 
  */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  // Check if user info exists in localStorage (set during Login)
-  const isAuthenticated = localStorage.getItem('user') !== null;
+  // CRITICAL FIX: Check for 'accessToken' as well. 
+  // Google Auth sets 'accessToken' first, then fetches user data.
+  const isAuthenticated = 
+    localStorage.getItem('accessToken') !== null || 
+    localStorage.getItem('user') !== null;
   
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -42,6 +45,10 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          
+          {/* NEW: Auth Success Page (Must be Public) */}
+          {/* This page captures the token from the URL and saves it */}
+          <Route path="/auth-success" element={<AuthSuccess />} />
 
           {/* --- PROTECTED ROUTES --- */}
           <Route
