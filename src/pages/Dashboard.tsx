@@ -1,14 +1,33 @@
+import React, { useEffect, useState } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Briefcase, FileSearch, FileText, Map, 
-  TrendingUp, Users, Target, ArrowRight
+  TrendingUp, Users, Target, ArrowRight 
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { PageHeader } from '@/components/layout/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { jobs } from '@/data/mockData';
 
+// API Imports
+import apiClient, { setAccessToken } from '@/lib/api';
+import { ENDPOINTS } from '@/lib/endpoints';
+import { PageHeader } from '@/components/layout/PageHeader';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+// --- Animation Variants ---
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0 }
+};
+
+// --- Static Stats (Placeholder for now) ---
 const stats = [
   { label: 'Active Opportunities', value: '150+', icon: Briefcase, color: 'text-primary' },
   { label: 'Companies Hiring', value: '45', icon: Users, color: 'text-success' },
@@ -47,27 +66,50 @@ const quickActions = [
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 }
-};
-
 export default function Dashboard() {
-  const latestJobs = jobs.slice(0, 3);
+  const [searchParams] = useSearchParams();
+  const [user, setUser] = useState({ name: "User" });
+  const [recentJobs, setRecentJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 1. Handle Google Login & Data Fetching
+  useEffect(() => {
+    const initDashboard = async () => {
+      // A. Check for Tokens in URL (Google Login Redirect)
+      const urlAccessToken = searchParams.get("accessToken");
+      const urlRefreshToken = searchParams.get("refreshToken");
+
+      if (urlAccessToken) {
+        setAccessToken(urlAccessToken);
+        localStorage.setItem("refreshToken", urlRefreshToken);
+        // Clean URL
+        window.history.replaceState({}, document.title, "/dashboard");
+      }
+
+      // B. Fetch Data (User Profile & Jobs)
+      try {
+        // Fetch Current User
+        const userRes = await apiClient.get(ENDPOINTS.USERS.CURRENT_USER);
+        setUser(userRes.data.data);
+
+        // Fetch Latest Jobs (Limit 3)
+        const jobsRes = await apiClient.get(`${ENDPOINTS.JOBS.GET_ALL}?limit=3`);
+        setRecentJobs(jobsRes.data.data.jobs || []);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initDashboard();
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen">
       <PageHeader 
         title="Dashboard" 
-        subtitle="Welcome back, Arjun! Here's what's happening."
+        subtitle={`Welcome back, ${user?.name?.split(' ')[0] || 'there'}! Here's what's happening.`}
       />
       
       <motion.div 
@@ -118,7 +160,7 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Latest Opportunities */}
+        {/* Latest Opportunities (Real Data) */}
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Latest Opportunities</h2>
@@ -129,35 +171,59 @@ export default function Dashboard() {
               </Button>
             </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {latestJobs.map((job) => (
-              <Card key={job.id} className="card-hover">
-                <CardContent className="p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={job.logoUrl} 
-                        alt={job.company}
-                        className="w-full h-full object-contain p-1.5"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${job.company}&background=6366f1&color=fff`;
-                        }}
-                      />
+          
+          {loading ? (
+             <div className="text-center py-10 text-muted-foreground">Loading jobs...</div>
+          ) : recentJobs.length === 0 ? (
+             <div className="text-center py-10 text-muted-foreground">No active jobs found. Check back later!</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {recentJobs.map((job) => (
+                <Card key={job._id} className="card-hover">
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
+                        {/* UI Avatars Fallback for missing logos */}
+                        <img 
+                          src={`https://ui-avatars.com/api/?name=${job.company}&background=random&color=fff`}
+                          alt={job.company}
+                          className="w-full h-full object-contain p-1.5"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium text-foreground truncate">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground">{job.company}</p>
+                      </div>
+                      {/* Show 'New' badge if created in last 3 days */}
+                      {new Date(job.createdAt) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) && (
+                        <span className="badge-new text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">New</span>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-foreground truncate">{job.role}</h3>
-                      <p className="text-sm text-muted-foreground">{job.company}</p>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <span className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground capitalize">
+                        {job.type}
+                      </span>
+                      <span className="text-xs px-2 py-1 rounded bg-green-100 text-green-700">
+                        {job.eligibility}
+                      </span>
                     </div>
-                    {job.isNew && <span className="badge-new">New</span>}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="badge-type">{job.type}</span>
-                    <span className="badge-salary">{job.salary}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    
+                    {/* Apply Button */}
+                    <a 
+                      href={job.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="block w-full"
+                    >
+                      <Button variant="outline" size="sm" className="w-full">
+                         Apply Now
+                      </Button>
+                    </a>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </motion.div>
 
         {/* Progress Card */}
