@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom"; // Added useLocation
 import { AppLayout } from "@/components/layout/AppLayout";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -18,19 +18,26 @@ import AuthSuccess from "./pages/AuthSuccess";
 const queryClient = new QueryClient();
 
 /**
- * ProtectedRoute Component
- * Checks local storage for authentication tokens. 
+ * ProtectedRoute Component (Fixed)
+ * 1. Checks LocalStorage for a token.
+ * 2. ALSO checks the URL for a token (specifically for Google Login).
+ * If either exists, it lets the user pass to the Dashboard.
  */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  // CRITICAL FIX: Check for 'accessToken' as well. 
-  // Google Auth sets 'accessToken' first, then fetches user data.
-  const isAuthenticated = 
-    localStorage.getItem('accessToken') !== null || 
-    localStorage.getItem('user') !== null;
+  const location = useLocation();
+
+  // Check 1: Is the user already logged in?
+  const hasTokenInStorage = localStorage.getItem('accessToken') !== null;
+
+  // Check 2: Is the user COMING from Google Login? (Token is in URL)
+  // We must allow this so Dashboard.jsx can load and save the token.
+  const hasTokenInUrl = location.search.includes("accessToken");
   
-  if (!isAuthenticated) {
+  // If neither is true, kick them out
+  if (!hasTokenInStorage && !hasTokenInUrl) {
     return <Navigate to="/login" replace />;
   }
+
   return <>{children}</>;
 };
 
@@ -45,9 +52,6 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          
-          {/* NEW: Auth Success Page (Must be Public) */}
-          {/* This page captures the token from the URL and saves it */}
           <Route path="/auth-success" element={<AuthSuccess />} />
 
           {/* --- PROTECTED ROUTES --- */}
