@@ -11,8 +11,8 @@ import ResumeScanner from "./pages/ResumeScanner";
 import ResumeBuilder from "./pages/ResumeBuilder";
 import Roadmaps from "./pages/Roadmaps";
 import NotFound from "./pages/NotFound";
-import Login from "./components/Auth/Login";   // Removed .jsx extension (cleaner)
-import Signup from "./components/Auth/Signup"; // Removed .jsx extension
+import Login from "./components/Auth/Login";   
+import Signup from "./components/Auth/Signup"; 
 
 const queryClient = new QueryClient();
 
