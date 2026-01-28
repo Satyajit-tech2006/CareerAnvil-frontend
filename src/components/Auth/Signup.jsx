@@ -1,48 +1,39 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Anvil } from "lucide-react";
-import { toast } from "sonner"; // Assuming you are using Sonner as per App.tsx
-import apiClient, { setAccessToken } from "../../lib/api.js";
+import { Eye, EyeOff, Mail, Lock, User, Hash, ArrowRight, Anvil } from "lucide-react";
+import { toast } from "sonner";
+import apiClient from "../../lib/api.js";
 import { ENDPOINTS } from "../../lib/endpoints.js";
+// Reusing the Login CSS for consistent styling
 import "./Login.css";
 
-const Login = () => {
+const Signup = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
-  // State for form data
+
   const [formData, setFormData] = useState({
-    email: "",
-    password: ""
+    name: "",      // Mapped to 'name' in schema
+    username: "",  // Mapped to 'username' in schema
+    email: "",     // Mapped to 'email' in schema
+    password: ""   // Mapped to 'password' in schema
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const response = await apiClient.post(ENDPOINTS.USERS.LOGIN, formData);
-      
-      // 1. Extract the access token and user data
-      const { accessToken, user } = response.data.data;
-      
-      // 2. Set the token for future requests
-      setAccessToken(accessToken);
-      
-      // 3. Optional: Store basic user info for UI
-      localStorage.setItem('user', JSON.stringify(user));
-
-      toast.success("Welcome back!");
-      navigate("/dashboard");
-
+      await apiClient.post(ENDPOINTS.USERS.REGISTER, formData);
+      toast.success("Account created! Please log in.");
+      navigate("/login");
     } catch (error) {
       console.error(error);
-      const errorMessage = error.response?.data?.message || "Invalid credentials. Please try again.";
+      const errorMessage = error.response?.data?.message || "Registration failed. Try a different username or email.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -60,11 +51,44 @@ const Login = () => {
         </div>
         
         <div className="login-header">
-          <h2>Welcome back</h2>
-          <p>Sign in to your account to continue</p>
+          <h2>Create Account</h2>
+          <p>Join the ecosystem for developers</p>
         </div>
 
-        <form className="login-form" onSubmit={handleLogin}>
+        <form className="login-form" onSubmit={handleSignup}>
+          
+          {/* Full Name Field */}
+          <div className="form-field">
+            <label>Full Name</label>
+            <div className="input-container">
+              <User className="field-icon" size={18} />
+              <input 
+                type="text" 
+                name="name"
+                placeholder="John Doe" 
+                value={formData.name}
+                onChange={handleChange}
+                required 
+              />
+            </div>
+          </div>
+
+          {/* Username Field */}
+          <div className="form-field">
+            <label>Username</label>
+            <div className="input-container">
+              <Hash className="field-icon" size={18} />
+              <input 
+                type="text" 
+                name="username"
+                placeholder="johndoe123" 
+                value={formData.username}
+                onChange={handleChange}
+                required 
+              />
+            </div>
+          </div>
+
           {/* Email Field */}
           <div className="form-field">
             <label>Email Address</label>
@@ -83,10 +107,7 @@ const Login = () => {
 
           {/* Password Field */}
           <div className="form-field">
-            <div className="label-row">
-              <label>Password</label>
-              <span className="forgot-pass">Forgot password?</span>
-            </div>
+            <label>Password</label>
             <div className="input-container">
               <Lock className="field-icon" size={18} />
               <input 
@@ -108,16 +129,16 @@ const Login = () => {
           </div>
 
           <button type="submit" className="login-submit-btn" disabled={loading}>
-            {loading ? "Signing in..." : <>Sign In <ArrowRight size={18} style={{marginLeft: '8px'}} /></>}
+            {loading ? "Creating..." : <>Sign Up <ArrowRight size={18} style={{marginLeft: '8px'}} /></>}
           </button>
         </form>
 
         <div className="login-footer">
-          New to CareerAnvil? <span className="signup-trigger" onClick={() => navigate("/signup")}>Create account</span>
+          Already have an account? <span className="signup-trigger" onClick={() => navigate("/login")}>Log in</span>
         </div>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Signup;

@@ -12,6 +12,7 @@ import ResumeBuilder from "./pages/ResumeBuilder";
 import Roadmaps from "./pages/Roadmaps";
 import NotFound from "./pages/NotFound";
 import Login from "./components/Auth/Login.jsx";
+import Signup from "./components/Auth/Signup.jsx";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +40,7 @@ const App = () => (
           {/* These routes do not display the sidebar or topbar navigation */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
 
           {/* --- PROTECTED ROUTES --- */}
           {/* These routes are wrapped in AppLayout for the sidebar ecosystem */}
