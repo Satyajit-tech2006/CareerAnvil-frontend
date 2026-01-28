@@ -17,8 +17,8 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { toast } from 'sonner';
 
 // API Imports
-import apiClient, { setAccessToken } from '../../lib/api.js';
-import { ENDPOINTS } from '../../lib/endpoints.js';
+import apiClient, { setAccessToken } from '@/lib/api';
+import { ENDPOINTS } from '@/lib/endpoints';
 
 // Navigation Items
 const navItems = [
@@ -26,7 +26,7 @@ const navItems = [
   { icon: Briefcase, label: 'Job Board', path: '/jobs' },
 ];
 
-// Define a flexible User interface to handle different backend responses
+// --- Interfaces (Restored for TypeScript) ---
 interface UserData {
   name?: string;
   fullName?: string;
@@ -45,11 +45,10 @@ interface SidebarContentProps {
 function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentProps) {
   const location = useLocation();
 
-  // Determine the display name (Checks 'fullName' first, then 'name', then 'username')
+  // Determine display name
   const displayName = user?.fullName || user?.name || user?.username || 'User';
   const displayEmail = user?.email || '';
 
-  // Helper to get initials
   const getInitials = (name: string) => {
     return name
       ?.split(' ')
@@ -102,7 +101,6 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
               <item.icon className={cn("w-5 h-5 flex-shrink-0 transition-colors", isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground")} />
               {!collapsed && <span>{item.label}</span>}
               
-              {/* Tooltip for collapsed state */}
               {collapsed && (
                 <div className="absolute left-14 bg-popover text-popover-foreground px-2 py-1 rounded-md text-xs shadow-md opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50 transition-opacity">
                   {item.label}
@@ -113,7 +111,7 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
         })}
       </nav>
 
-      {/* Bottom Section */}
+      {/* Footer */}
       <div className="p-3 border-t border-border space-y-1">
         <button className={cn(
           "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors",
@@ -134,7 +132,6 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
           {!collapsed && <span>Logout</span>}
         </button>
         
-        {/* User Profile */}
         <div className={cn(
           "flex items-center gap-3 px-3 py-3 mt-2 rounded-lg bg-accent/30 border border-border/50",
           collapsed && "justify-center p-2"
@@ -163,35 +160,49 @@ export function AppSidebar() {
   const [user, setUser] = useState<UserData | null>(null);
   const navigate = useNavigate();
 
-  // Fetch User from LocalStorage on mount
+  // --- AUTO-SYNC FIX ---
+  // Periodically check LocalStorage to stay in sync with Dashboard updates
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        console.log("Sidebar User Data:", parsedUser); // Debugging log
-        setUser(parsedUser);
-      } catch (e) {
-        console.error("Failed to parse user data", e);
+    const syncUserData = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          // Only update state if data actually changed to avoid re-renders
+          setUser(prev => {
+            if (JSON.stringify(prev) !== storedUser) {
+              return parsedUser;
+            }
+            return prev;
+          });
+        } catch (e) {
+          console.error("Failed to parse user data", e);
+        }
       }
-    }
+    };
+
+    // 1. Initial Check
+    syncUserData();
+
+    // 2. Poll every 2 seconds
+    const intervalId = setInterval(syncUserData, 2000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
-  // Handle Logout
   const handleLogout = async () => {
     try {
       await apiClient.post(ENDPOINTS.USERS.LOGOUT);
-      
-      // Clear client state
       setAccessToken('');
       localStorage.removeItem('user');
-      
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
       toast.success("Logged out successfully");
       navigate('/login');
     } catch (error) {
       console.error("Logout failed", error);
-      // Force logout even if API fails
       localStorage.removeItem('user');
+      localStorage.removeItem('accessToken');
       navigate('/login');
     }
   };
