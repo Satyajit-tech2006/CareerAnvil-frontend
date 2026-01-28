@@ -47,8 +47,6 @@ const Home = () => {
 
             <div className="nav-links">
               <a href="#features" className="nav-link">Features</a>
-              <a href="#resources" className="nav-link">Resources</a>
-              <a href="#testimonials" className="nav-link">Success Stories</a>
             </div>
 
             <div className="nav-actions">
