@@ -27,7 +27,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 }
 };
 
-// --- Static Stats (Placeholder for now) ---
+// --- Static Stats ---
 const stats = [
   { label: 'Active Opportunities', value: '150+', icon: Briefcase, color: 'text-primary' },
   { label: 'Companies Hiring', value: '45', icon: Users, color: 'text-success' },
@@ -68,7 +68,11 @@ const quickActions = [
 
 export default function Dashboard() {
   const [searchParams] = useSearchParams();
-  const [user, setUser] = useState({ name: "User" });
+  // Initialize with LocalStorage data if available to prevent "User" flash
+  const [user, setUser] = useState(() => {
+    const stored = localStorage.getItem('user');
+    return stored ? JSON.parse(stored) : { name: "User" };
+  });
   const [recentJobs, setRecentJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -88,11 +92,19 @@ export default function Dashboard() {
 
       // B. Fetch Data (User Profile & Jobs)
       try {
-        // Fetch Current User
+        // 1. Fetch Current User (Get fresh data from DB)
+        // Ensure your Backend returns { data: { name: "...", ... } }
         const userRes = await apiClient.get(ENDPOINTS.USERS.CURRENT_USER);
-        setUser(userRes.data.data);
+        const userData = userRes.data.data;
+        
+        console.log("Fetched User Data:", userData); // Debug Log
+        
+        // Update State
+        setUser(userData);
+        // Update LocalStorage so Sidebar also updates
+        localStorage.setItem('user', JSON.stringify(userData));
 
-        // Fetch Latest Jobs (Limit 3)
+        // 2. Fetch Latest Jobs (Limit 3)
         const jobsRes = await apiClient.get(`${ENDPOINTS.JOBS.GET_ALL}?limit=3`);
         setRecentJobs(jobsRes.data.data.jobs || []);
       } catch (error) {
@@ -105,11 +117,16 @@ export default function Dashboard() {
     initDashboard();
   }, [searchParams]);
 
+  // Helper to get the best display name
+  const displayName = user?.fullName || user?.name || user?.username || 'User';
+  // Get just the first name for the welcome message
+  const firstName = displayName.split(' ')[0];
+
   return (
     <div className="min-h-screen">
       <PageHeader 
         title="Dashboard" 
-        subtitle={`Welcome back, ${user?.name?.split(' ')[0] || 'there'}! Here's what's happening.`}
+        subtitle={`Welcome back, ${firstName}! Here's what's happening.`}
       />
       
       <motion.div 
@@ -160,7 +177,7 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        {/* Latest Opportunities (Real Data) */}
+        {/* Latest Opportunities */}
         <motion.div variants={itemVariants}>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground">Latest Opportunities</h2>
@@ -183,7 +200,6 @@ export default function Dashboard() {
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center overflow-hidden">
-                        {/* UI Avatars Fallback for missing logos */}
                         <img 
                           src={`https://ui-avatars.com/api/?name=${job.company}&background=random&color=fff`}
                           alt={job.company}
@@ -194,7 +210,6 @@ export default function Dashboard() {
                         <h3 className="font-medium text-foreground truncate">{job.title}</h3>
                         <p className="text-sm text-muted-foreground">{job.company}</p>
                       </div>
-                      {/* Show 'New' badge if created in last 3 days */}
                       {new Date(job.createdAt) > new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) && (
                         <span className="badge-new text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">New</span>
                       )}
@@ -207,8 +222,6 @@ export default function Dashboard() {
                         {job.eligibility}
                       </span>
                     </div>
-                    
-                    {/* Apply Button */}
                     <a 
                       href={job.link} 
                       target="_blank" 
