@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Anvil } from "lucide-react";
-import { toast } from "sonner"; // Assuming you are using Sonner as per App.tsx
+import { toast } from "sonner"; 
 import apiClient, { setAccessToken } from "../../lib/api.js";
 import { ENDPOINTS } from "../../lib/endpoints.js";
 import "./Login.css";
@@ -11,7 +11,6 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
-  // State for form data
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -21,20 +20,21 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // --- NEW: Google Login Handler ---
+  const handleGoogleLogin = () => {
+    // Redirects browser to your Backend's Google Auth Endpoint
+    // Update the domain if you are testing locally (http://localhost:8000)
+    window.location.href = "https://career-anvil-backend.vercel.app/api/v1/users/auth/google";
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
       const response = await apiClient.post(ENDPOINTS.USERS.LOGIN, formData);
-      
-      // 1. Extract the access token and user data
       const { accessToken, user } = response.data.data;
-      
-      // 2. Set the token for future requests
       setAccessToken(accessToken);
-      
-      // 3. Optional: Store basic user info for UI
       localStorage.setItem('user', JSON.stringify(user));
 
       toast.success("Welcome back!");
@@ -42,7 +42,7 @@ const Login = () => {
 
     } catch (error) {
       console.error(error);
-      const errorMessage = error.response?.data?.message || "Invalid credentials. Please try again.";
+      const errorMessage = error.response?.data?.message || "Invalid credentials.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -62,6 +62,24 @@ const Login = () => {
         <div className="login-header">
           <h2>Welcome back</h2>
           <p>Sign in to your account to continue</p>
+        </div>
+
+        {/* --- NEW: Google Button --- */}
+        <button 
+          type="button" 
+          className="google-btn" 
+          onClick={handleGoogleLogin}
+        >
+          <img 
+            src="https://www.svgrepo.com/show/475656/google-color.svg" 
+            alt="Google" 
+            className="google-icon" 
+          />
+          Continue with Google
+        </button>
+
+        <div className="divider">
+          <span>OR</span>
         </div>
 
         <form className="login-form" onSubmit={handleLogin}>

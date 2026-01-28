@@ -4,7 +4,6 @@ import { Eye, EyeOff, Mail, Lock, User, Hash, ArrowRight, Anvil } from "lucide-r
 import { toast } from "sonner";
 import apiClient from "../../lib/api.js";
 import { ENDPOINTS } from "../../lib/endpoints.js";
-// Reusing the Login CSS for consistent styling
 import "./Login.css";
 
 const Signup = () => {
@@ -13,14 +12,20 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    name: "",      // Mapped to 'name' in schema
-    username: "",  // Mapped to 'username' in schema
-    email: "",     // Mapped to 'email' in schema
-    password: ""   // Mapped to 'password' in schema
+    name: "",
+    username: "",
+    email: "",
+    password: ""
   });
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  // --- NEW: Google Login Handler ---
+  const handleGoogleSignup = () => {
+    // Same URL as login - Google handles both scenarios
+    window.location.href = "https://career-anvil-backend.vercel.app/api/v1/users/auth/google";
   };
 
   const handleSignup = async (e) => {
@@ -33,7 +38,7 @@ const Signup = () => {
       navigate("/login");
     } catch (error) {
       console.error(error);
-      const errorMessage = error.response?.data?.message || "Registration failed. Try a different username or email.";
+      const errorMessage = error.response?.data?.message || "Registration failed.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -53,6 +58,24 @@ const Signup = () => {
         <div className="login-header">
           <h2>Create Account</h2>
           <p>Join the ecosystem for developers</p>
+        </div>
+
+        {/* --- NEW: Google Button --- */}
+        <button 
+          type="button" 
+          className="google-btn" 
+          onClick={handleGoogleSignup}
+        >
+          <img 
+            src="https://www.svgrepo.com/show/475656/google-color.svg" 
+            alt="Google" 
+            className="google-icon" 
+          />
+          Sign up with Google
+        </button>
+
+        <div className="divider">
+          <span>OR</span>
         </div>
 
         <form className="login-form" onSubmit={handleSignup}>
