@@ -20,6 +20,7 @@ import SheetView from "./pages/SheetView";       // The detailed study view
 import MyLearning from "./pages/MyLearning";     // User's enrolled courses
 
 // --- ADMIN PAGES ---
+import AdminSheetList from "./pages/admin/AdminSheetList";
 import AdminSheetBuilder from "./pages/admin/AdminSheetBuilder";
 
 // --- AUTH ---
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="/sheets/:slug" element={<SheetView />} /> {/* Specific Sheet */}
 
             {/* Admin Routes */}
+            <Route path="/admin/sheets" element={<AdminSheetList />} />
             <Route path="/admin/sheets/:id/builder" element={<AdminSheetBuilder />} />
           </Route>
 

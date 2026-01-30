@@ -48,10 +48,14 @@ export default function AdminSheetBuilder() {
 
   // Form Data
   const [sectionTitle, setSectionTitle] = useState('');
+  
+  // UPDATED: Item Form with Resource Links
   const [itemForm, setItemForm] = useState({
     title: '',
-    externalLink: '', // FIX: Changed from 'link' to match Backend Schema
-    difficulty: 'medium', // FIX: Lowercase to match Enum
+    externalLink: '', 
+    youtubeLink: '', // New Field
+    articleLink: '', // New Field
+    difficulty: 'medium', 
     type: 'problem' 
   });
 
@@ -65,11 +69,11 @@ export default function AdminSheetBuilder() {
       setLoading(true);
       
       // 1. Fetch Sheet Details
-      // Try to get specific sheet if endpoint exists, else filter
       const sheetRes = await apiClient.get(ENDPOINTS.SHEETS.GET_ALL); 
-      // If your API supports /sheets/:id, switch to that. 
-      // Current fallback:
-      const foundSheet = sheetRes.data.data.find(s => s._id === id) || sheetRes.data.data.sheets?.find(s => s._id === id);
+      // Fallback find logic if specific ID endpoint isn't set up
+      const foundSheet = sheetRes.data.data.sheets 
+        ? sheetRes.data.data.sheets.find(s => s._id === id) 
+        : sheetRes.data.data.find(s => s._id === id);
       
       if (!foundSheet) throw new Error("Sheet not found");
       setSheet(foundSheet);
@@ -106,7 +110,7 @@ export default function AdminSheetBuilder() {
     try {
       await apiClient.post(ENDPOINTS.SECTIONS.CREATE, {
         title: sectionTitle,
-        sheetId: id, // FIX: Backend expects 'sheetId'
+        sheetId: id,
         order: sections.length + 1 
       });
       toast.success("Section added");
@@ -125,7 +129,6 @@ export default function AdminSheetBuilder() {
       await apiClient.delete(ENDPOINTS.SECTIONS.DELETE(sectionId));
       toast.success("Section deleted");
       setSections(prev => prev.filter(s => s._id !== sectionId));
-      // Cleanup items map
       const newMap = { ...itemsMap };
       delete newMap[sectionId];
       setItemsMap(newMap);
@@ -137,30 +140,40 @@ export default function AdminSheetBuilder() {
   // --- ACTIONS: ITEMS ---
   const openAddItemModal = (sectionId) => {
     setActiveSectionId(sectionId);
-    setItemForm({ title: '', externalLink: '', difficulty: 'medium', type: 'problem' });
+    // Reset form
+    setItemForm({ 
+        title: '', 
+        externalLink: '', 
+        youtubeLink: '', 
+        articleLink: '', 
+        difficulty: 'medium', 
+        type: 'problem' 
+    });
     setIsItemModalOpen(true);
   };
 
   const handleCreateItem = async () => {
     if (!itemForm.title || !itemForm.externalLink) {
-        toast.error("Title and Link are required");
+        toast.error("Title and Problem Link are required");
         return;
     }
 
     try {
-      // Calculate order based on existing items in this section
       const currentItems = itemsMap[activeSectionId] || [];
       const newOrder = currentItems.length + 1;
 
       await apiClient.post(ENDPOINTS.ITEMS.CREATE, {
-        sheetId: id,        // Required by Backend
-        sectionId: activeSectionId, // Required by Backend
+        sheetId: id,
+        sectionId: activeSectionId,
         title: itemForm.title,
         type: itemForm.type,
         difficulty: itemForm.difficulty,
         externalLink: itemForm.externalLink,
+        // Send Resources
+        youtubeLink: itemForm.youtubeLink,
+        articleLink: itemForm.articleLink,
         order: newOrder,
-        tags: [] // Optional
+        tags: [] 
       });
 
       toast.success("Item added");
@@ -192,7 +205,7 @@ export default function AdminSheetBuilder() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* --- HEADER --- */}
-      <div className="border-b border-border bg-card sticky top-0 z-10">
+      <div className="border-b border-border bg-card sticky top-0 z-10 shadow-sm">
         <div className="container max-w-5xl py-4">
           <Button variant="ghost" size="sm" className="mb-2 -ml-2 text-muted-foreground hover:text-foreground" onClick={() => navigate('/admin/sheets')}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Sheets
@@ -203,12 +216,8 @@ export default function AdminSheetBuilder() {
               <p className="text-sm text-muted-foreground mt-0.5">Builder Mode</p>
             </div>
             <div className="flex items-center gap-3">
-                <Badge variant="secondary">
-                 {sections.length} Sections
-                </Badge>
-                <Badge variant="outline">
-                 {Object.values(itemsMap).flat().length} Total Items
-                </Badge>
+                <Badge variant="secondary">{sections.length} Sections</Badge>
+                <Badge variant="outline">{Object.values(itemsMap).flat().length} Total Items</Badge>
             </div>
           </div>
         </div>
@@ -232,20 +241,10 @@ export default function AdminSheetBuilder() {
                   <CardTitle className="text-base font-semibold">{section.title}</CardTitle>
                 </div>
                 <div className="flex items-center gap-2 opacity-100 sm:opacity-0 sm:group-hover/card:opacity-100 transition-opacity">
-                  <Button 
-                    size="sm" 
-                    variant="outline" 
-                    onClick={() => openAddItemModal(section._id)}
-                    className="h-8 text-xs bg-background"
-                  >
+                  <Button size="sm" variant="outline" onClick={() => openAddItemModal(section._id)} className="h-8 text-xs bg-background">
                     <Plus className="w-3 h-3 mr-1" /> Add Item
                   </Button>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
-                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => handleDeleteSection(section._id)}
-                  >
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" onClick={() => handleDeleteSection(section._id)}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
@@ -255,9 +254,7 @@ export default function AdminSheetBuilder() {
                 {(itemsMap[section._id] || []).length === 0 ? (
                   <div className="py-8 flex flex-col items-center justify-center text-muted-foreground border-dashed">
                     <p className="text-sm mb-2">This section is empty</p>
-                    <Button variant="ghost" size="sm" onClick={() => openAddItemModal(section._id)} className="text-primary">
-                        Add your first problem
-                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => openAddItemModal(section._id)} className="text-primary">Add your first problem</Button>
                   </div>
                 ) : (
                   <div className="divide-y divide-border/40">
@@ -265,39 +262,30 @@ export default function AdminSheetBuilder() {
                       <div key={item._id} className="flex items-center justify-between p-3 px-4 hover:bg-muted/40 group/item transition-colors">
                         <div className="flex items-center gap-3 overflow-hidden">
                           {item.type === 'video' ? (
-                              <div className="p-1.5 bg-blue-500/10 rounded-md">
-                                <Video className="w-4 h-4 text-blue-500" />
-                              </div>
+                              <div className="p-1.5 bg-blue-500/10 rounded-md"><Video className="w-4 h-4 text-blue-500" /></div>
                           ) : (
-                              <div className="p-1.5 bg-orange-500/10 rounded-md">
-                                <FileCode className="w-4 h-4 text-orange-500" />
-                              </div>
+                              <div className="p-1.5 bg-orange-500/10 rounded-md"><FileCode className="w-4 h-4 text-orange-500" /></div>
                           )}
                           <div className="min-w-0">
                             <p className="font-medium truncate text-sm text-foreground">{item.title}</p>
-                            <a href={item.externalLink} target="_blank" rel="noreferrer" className="text-xs text-muted-foreground hover:underline flex items-center gap-1 truncate max-w-[300px]">
-                              {item.externalLink} <ExternalLink className="w-3 h-3" />
-                            </a>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <a href={item.externalLink} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1 truncate max-w-[200px]">
+                                  {item.externalLink} <ExternalLink className="w-3 h-3" />
+                                </a>
+                                {(item.youtubeLink || item.articleLink) && <span className="text-[10px] border px-1 rounded bg-muted">Has Resources</span>}
+                            </div>
                           </div>
                         </div>
                         
                         <div className="flex items-center gap-3">
-                           <Badge 
-                             variant="outline" 
-                             className={`text-[10px] h-5 capitalize ${
+                           <Badge variant="outline" className={`text-[10px] h-5 capitalize ${
                                item.difficulty === 'easy' ? 'text-green-600 border-green-200 bg-green-50' : 
                                item.difficulty === 'medium' ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
                                'text-red-600 border-red-200 bg-red-50'
-                             }`}
-                           >
+                           }`}>
                              {item.difficulty}
                            </Badge>
-                           <Button 
-                             size="icon" 
-                             variant="ghost" 
-                             className="h-7 w-7 opacity-0 group-hover/item:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
-                             onClick={() => handleDeleteItem(item._id, section._id)}
-                           >
+                           <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover/item:opacity-100 transition-opacity text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item._id, section._id)}>
                              <Trash2 className="w-3.5 h-3.5" />
                            </Button>
                         </div>
@@ -310,13 +298,7 @@ export default function AdminSheetBuilder() {
           ))}
         </div>
 
-        {/* Global Add Section Button */}
-        <Button 
-          size="lg" 
-          variant="outline" 
-          className="w-full h-20 border-dashed border-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 gap-2 text-lg font-medium"
-          onClick={() => setIsSectionModalOpen(true)}
-        >
+        <Button size="lg" variant="outline" className="w-full h-20 border-dashed border-2 text-muted-foreground hover:text-primary hover:border-primary/50 hover:bg-primary/5 gap-2 text-lg font-medium" onClick={() => setIsSectionModalOpen(true)}>
           <Plus className="w-6 h-6" /> Add New Section
         </Button>
       </div>
@@ -324,56 +306,48 @@ export default function AdminSheetBuilder() {
       {/* --- MODAL: CREATE SECTION --- */}
       <Dialog open={isSectionModalOpen} onOpenChange={setIsSectionModalOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Add New Section</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+          <DialogHeader><DialogTitle>Add New Section</DialogTitle></DialogHeader>
+          <div className="py-4">
             <div className="space-y-2">
               <Label>Section Title</Label>
-              <Input 
-                value={sectionTitle} 
-                onChange={(e) => setSectionTitle(e.target.value)} 
-                placeholder="e.g. Arrays & Hashing" 
-                autoFocus
-              />
+              <Input value={sectionTitle} onChange={(e) => setSectionTitle(e.target.value)} placeholder="e.g. Arrays & Hashing" autoFocus />
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleCreateSection}>Create Section</Button>
-          </DialogFooter>
+          <DialogFooter><Button onClick={handleCreateSection}>Create Section</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* --- MODAL: CREATE ITEM --- */}
+      {/* --- MODAL: CREATE ITEM (Updated with Resources) --- */}
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Add Item</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader><DialogTitle>Add Item</DialogTitle></DialogHeader>
+          <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Title</Label>
-              <Input 
-                value={itemForm.title} 
-                onChange={(e) => setItemForm({...itemForm, title: e.target.value})} 
-                placeholder="e.g. Two Sum" 
-              />
+              <Input value={itemForm.title} onChange={(e) => setItemForm({...itemForm, title: e.target.value})} placeholder="e.g. Two Sum" />
             </div>
+            
             <div className="space-y-2">
-              <Label>External Link</Label>
-              <Input 
-                value={itemForm.externalLink} 
-                onChange={(e) => setItemForm({...itemForm, externalLink: e.target.value})} 
-                placeholder="https://leetcode.com/problems/..." 
-              />
+              <Label>Problem Link (LeetCode/GFG)</Label>
+              <Input value={itemForm.externalLink} onChange={(e) => setItemForm({...itemForm, externalLink: e.target.value})} placeholder="https://leetcode.com/problems/..." />
             </div>
+
+            {/* NEW: RESOURCE LINKS */}
+            <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label>YouTube Solution (Opt)</Label>
+                 <Input value={itemForm.youtubeLink} onChange={(e) => setItemForm({...itemForm, youtubeLink: e.target.value})} placeholder="https://youtu.be/..." />
+               </div>
+               <div className="space-y-2">
+                 <Label>Article/Note (Opt)</Label>
+                 <Input value={itemForm.articleLink} onChange={(e) => setItemForm({...itemForm, articleLink: e.target.value})} placeholder="https://..." />
+               </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Difficulty</Label>
-                <Select 
-                  value={itemForm.difficulty} 
-                  onValueChange={(v) => setItemForm({...itemForm, difficulty: v})}
-                >
+                <Select value={itemForm.difficulty} onValueChange={(v) => setItemForm({...itemForm, difficulty: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="easy">Easy</SelectItem>
@@ -384,10 +358,7 @@ export default function AdminSheetBuilder() {
               </div>
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select 
-                  value={itemForm.type} 
-                  onValueChange={(v) => setItemForm({...itemForm, type: v})}
-                >
+                <Select value={itemForm.type} onValueChange={(v) => setItemForm({...itemForm, type: v})}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="problem">Problem</SelectItem>
@@ -397,9 +368,7 @@ export default function AdminSheetBuilder() {
               </div>
             </div>
           </div>
-          <DialogFooter>
-            <Button onClick={handleCreateItem}>Add Item</Button>
-          </DialogFooter>
+          <DialogFooter><Button onClick={handleCreateItem}>Add Item</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
