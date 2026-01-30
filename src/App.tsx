@@ -14,14 +14,16 @@ import ResumeBuilder from "./pages/ResumeBuilder";
 import NotFound from "./pages/NotFound";
 import AuthSuccess from "./pages/AuthSuccess";
 
-// --- NEW LEARNING PAGES ---
-import SheetLibrary from "./pages/SheetLibrary"; // Replaces the old Roadmaps page
-import SheetView from "./pages/SheetView";       // The detailed study view
-import MyLearning from "./pages/MyLearning";     // User's enrolled courses
+// --- LEARNING PAGES ---
+import SheetLibrary from "./pages/SheetLibrary"; // Catalog
+import SheetView from "./pages/SheetView";       // Study Interface
+import MyLearning from "./pages/MyLearning";     // User Dashboard Tab
+import NoteViewer from "./pages/NoteViewer";     // <--- NEW: Student reads notes
 
 // --- ADMIN PAGES ---
 import AdminSheetList from "./pages/admin/AdminSheetList";
 import AdminSheetBuilder from "./pages/admin/AdminSheetBuilder";
+import NoteBuilder from "./pages/admin/NoteBuilder"; // <--- NEW: Admin writes notes
 
 // --- AUTH ---
 import Login from "./components/Auth/Login"; 
@@ -31,24 +33,16 @@ const queryClient = new QueryClient();
 
 /**
  * ProtectedRoute Component
- * 1. Checks LocalStorage for a token.
- * 2. ALSO checks the URL for a token (specifically for Google Login).
- * If either exists, it lets the user pass.
+ * Checks for token in Storage OR URL (Google Auth redirect)
  */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-
-  // Check 1: Is the user already logged in?
   const hasTokenInStorage = localStorage.getItem('accessToken') !== null;
-
-  // Check 2: Is the user COMING from Google Login? (Token is in URL)
   const hasTokenInUrl = location.search.includes("accessToken");
   
-  // If neither is true, kick them out
   if (!hasTokenInStorage && !hasTokenInUrl) {
     return <Navigate to="/login" replace />;
   }
-
   return <>{children}</>;
 };
 
@@ -59,13 +53,18 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* --- PUBLIC ROUTES --- */}
+          
+          {/* ==========================
+              1. PUBLIC ROUTES (Accessible by everyone)
+              ========================== */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/auth-success" element={<AuthSuccess />} />
 
-          {/* --- PROTECTED ROUTES --- */}
+          {/* ==========================
+              2. PROTECTED ROUTES (Requires Login)
+              ========================== */}
           <Route
             element={
               <ProtectedRoute>
@@ -73,20 +72,23 @@ const App = () => (
               </ProtectedRoute>
             }
           >
-            {/* Core User Features */}
+            {/* --- Core User Features --- */}
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/jobs" element={<JobBoard />} />
             <Route path="/scanner" element={<ResumeScanner />} />
             <Route path="/builder" element={<ResumeBuilder />} />
             
-            {/* Learning Ecosystem */}
-            <Route path="/roadmaps" element={<SheetLibrary />} /> {/* Public Catalog */}
-            <Route path="/my-learning" element={<MyLearning />} /> {/* User Progress */}
-            <Route path="/sheets/:slug" element={<SheetView />} /> {/* Specific Sheet */}
+            {/* --- Learning Ecosystem (Student View) --- */}
+            <Route path="/roadmaps" element={<SheetLibrary />} />       {/* Browse Sheets */}
+            <Route path="/my-learning" element={<MyLearning />} />      {/* Progress Dashboard */}
+            <Route path="/sheets/:slug" element={<SheetView />} />      {/* Solve Sheet */}
+            <Route path="/notes/:itemId" element={<NoteViewer />} />    {/* Read Internal Note */}
 
-            {/* Admin Routes */}
+            {/* --- Admin Ecosystem (Builder View) --- */}
+            {/* Ideally, wrap these in an <AdminRoute> later for extra security */}
             <Route path="/admin/sheets" element={<AdminSheetList />} />
             <Route path="/admin/sheets/:id/builder" element={<AdminSheetBuilder />} />
+            <Route path="/admin/notes/:itemId" element={<NoteBuilder />} />
           </Route>
 
           {/* --- CATCH ALL --- */}
