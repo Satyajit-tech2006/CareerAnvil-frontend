@@ -20,10 +20,8 @@ const Login = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- NEW: Google Login Handler ---
   const handleGoogleLogin = () => {
     // Redirects browser to your Backend's Google Auth Endpoint
-    // Update the domain if you are testing locally (http://localhost:8000)
     window.location.href = "https://career-anvil-backend.vercel.app/api/v1/users/auth/google";
   };
 
@@ -33,11 +31,22 @@ const Login = () => {
 
     try {
       const response = await apiClient.post(ENDPOINTS.USERS.LOGIN, formData);
-      const { accessToken, user } = response.data.data;
-      setAccessToken(accessToken);
+      // Destructure expected data
+      const { user, accessToken, refreshToken } = response.data.data;
+      
+      // --- CRITICAL FIX START ---
+      // 1. Save tokens to LocalStorage immediately
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('user', JSON.stringify(user));
+      
+      // 2. Set API client token
+      setAccessToken(accessToken);
+      // --- CRITICAL FIX END ---
 
       toast.success("Welcome back!");
+      
+      // 3. Navigate (Now ProtectedRoute will see the token)
       navigate("/dashboard");
 
     } catch (error) {
@@ -64,7 +73,7 @@ const Login = () => {
           <p>Sign in to your account to continue</p>
         </div>
 
-        {/* --- NEW: Google Button --- */}
+        {/* Google Button */}
         <button 
           type="button" 
           className="google-btn" 
