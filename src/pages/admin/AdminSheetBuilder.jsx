@@ -9,7 +9,7 @@ import {
   FileCode,
   ExternalLink,
   GripVertical,
-  FileText // <--- 1. Imported for Note Icon
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -50,7 +50,7 @@ export default function AdminSheetBuilder() {
   // Form Data
   const [sectionTitle, setSectionTitle] = useState('');
   
-  // Item Form with Resource Links
+  // Item Form
   const [itemForm, setItemForm] = useState({
     title: '',
     externalLink: '', 
@@ -152,8 +152,9 @@ export default function AdminSheetBuilder() {
   };
 
   const handleCreateItem = async () => {
-    if (!itemForm.title || !itemForm.externalLink) {
-        toast.error("Title and Problem Link are required");
+    // UPDATED: Only Title is necessary now
+    if (!itemForm.title) {
+        toast.error("Title is required");
         return;
     }
 
@@ -276,7 +277,6 @@ export default function AdminSheetBuilder() {
                         </div>
                         
                         <div className="flex items-center gap-3">
-                           {/* --- 2. NEW: NOTE BUTTON --- */}
                            <Button 
                              size="sm" 
                              variant="outline" 
@@ -338,7 +338,7 @@ export default function AdminSheetBuilder() {
             </div>
             
             <div className="space-y-2">
-              <Label>Problem Link (LeetCode/GFG)</Label>
+              <Label>Problem Link (Optional)</Label>
               <Input value={itemForm.externalLink} onChange={(e) => setItemForm({...itemForm, externalLink: e.target.value})} placeholder="https://leetcode.com/problems/..." />
             </div>
 
