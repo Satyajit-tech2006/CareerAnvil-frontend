@@ -49,13 +49,19 @@ export const ENDPOINTS = {
 
   // --- ENROLLMENT (User tracking a Sheet) ---
   ENROLLMENT: {
-    ENROLL: '/enrollment',                 // POST /api/v1/enrollment (Start a sheet)
-    MY_SHEETS: '/enrollment/my-sheets',    // GET /api/v1/enrollment/my-sheets (Dashboard list)
+    ENROLL: '/enrollments',                // POST /api/v1/enrollments (Start a sheet)
+    MY_SHEETS: '/enrollments/my-sheets',   // GET /api/v1/enrollments/my-sheets (Dashboard list)
   },
 
   // --- PROGRESS (Tracking checkboxes) ---
   PROGRESS: {
     TOGGLE: '/progress/toggle',            // POST /api/v1/progress/toggle (Mark done/todo)
     GET_SHEET_PROGRESS: (sheetId) => `/progress/${sheetId}`, // GET /api/v1/progress/:sheetId
+  },
+
+  // --- NOTES (Rich Text Content) ---
+  NOTES: {
+    GET: (itemId) => `/notes/${itemId}`,   // GET /api/v1/notes/:itemId
+    SAVE: '/notes',                        // POST /api/v1/notes (Upsert)
   }
 };

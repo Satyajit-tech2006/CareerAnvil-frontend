@@ -8,7 +8,8 @@ import {
   Video, 
   FileCode,
   ExternalLink,
-  GripVertical
+  GripVertical,
+  FileText // <--- 1. Imported for Note Icon
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -49,12 +50,12 @@ export default function AdminSheetBuilder() {
   // Form Data
   const [sectionTitle, setSectionTitle] = useState('');
   
-  // UPDATED: Item Form with Resource Links
+  // Item Form with Resource Links
   const [itemForm, setItemForm] = useState({
     title: '',
     externalLink: '', 
-    youtubeLink: '', // New Field
-    articleLink: '', // New Field
+    youtubeLink: '', 
+    articleLink: '', 
     difficulty: 'medium', 
     type: 'problem' 
   });
@@ -70,7 +71,6 @@ export default function AdminSheetBuilder() {
       
       // 1. Fetch Sheet Details
       const sheetRes = await apiClient.get(ENDPOINTS.SHEETS.GET_ALL); 
-      // Fallback find logic if specific ID endpoint isn't set up
       const foundSheet = sheetRes.data.data.sheets 
         ? sheetRes.data.data.sheets.find(s => s._id === id) 
         : sheetRes.data.data.find(s => s._id === id);
@@ -140,7 +140,6 @@ export default function AdminSheetBuilder() {
   // --- ACTIONS: ITEMS ---
   const openAddItemModal = (sectionId) => {
     setActiveSectionId(sectionId);
-    // Reset form
     setItemForm({ 
         title: '', 
         externalLink: '', 
@@ -169,7 +168,6 @@ export default function AdminSheetBuilder() {
         type: itemForm.type,
         difficulty: itemForm.difficulty,
         externalLink: itemForm.externalLink,
-        // Send Resources
         youtubeLink: itemForm.youtubeLink,
         articleLink: itemForm.articleLink,
         order: newOrder,
@@ -278,6 +276,17 @@ export default function AdminSheetBuilder() {
                         </div>
                         
                         <div className="flex items-center gap-3">
+                           {/* --- 2. NEW: NOTE BUTTON --- */}
+                           <Button 
+                             size="sm" 
+                             variant="outline" 
+                             className={`h-7 text-xs gap-1 border-dashed ${item.hasNote ? 'text-blue-600 bg-blue-50 border-blue-200' : 'text-muted-foreground'}`}
+                             onClick={() => navigate(`/admin/notes/${item._id}`)}
+                           >
+                             <FileText className="w-3 h-3" /> 
+                             {item.hasNote ? 'Edit Note' : 'Add Note'}
+                           </Button>
+
                            <Badge variant="outline" className={`text-[10px] h-5 capitalize ${
                                item.difficulty === 'easy' ? 'text-green-600 border-green-200 bg-green-50' : 
                                item.difficulty === 'medium' ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
@@ -285,6 +294,7 @@ export default function AdminSheetBuilder() {
                            }`}>
                              {item.difficulty}
                            </Badge>
+                           
                            <Button size="icon" variant="ghost" className="h-7 w-7 opacity-0 group-hover/item:opacity-100 transition-opacity text-muted-foreground hover:text-destructive" onClick={() => handleDeleteItem(item._id, section._id)}>
                              <Trash2 className="w-3.5 h-3.5" />
                            </Button>
@@ -317,7 +327,7 @@ export default function AdminSheetBuilder() {
         </DialogContent>
       </Dialog>
 
-      {/* --- MODAL: CREATE ITEM (Updated with Resources) --- */}
+      {/* --- MODAL: CREATE ITEM --- */}
       <Dialog open={isItemModalOpen} onOpenChange={setIsItemModalOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader><DialogTitle>Add Item</DialogTitle></DialogHeader>
@@ -332,14 +342,13 @@ export default function AdminSheetBuilder() {
               <Input value={itemForm.externalLink} onChange={(e) => setItemForm({...itemForm, externalLink: e.target.value})} placeholder="https://leetcode.com/problems/..." />
             </div>
 
-            {/* NEW: RESOURCE LINKS */}
             <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
                  <Label>YouTube Solution (Opt)</Label>
                  <Input value={itemForm.youtubeLink} onChange={(e) => setItemForm({...itemForm, youtubeLink: e.target.value})} placeholder="https://youtu.be/..." />
                </div>
                <div className="space-y-2">
-                 <Label>Article/Note (Opt)</Label>
+                 <Label>External Article (Opt)</Label>
                  <Input value={itemForm.articleLink} onChange={(e) => setItemForm({...itemForm, articleLink: e.target.value})} placeholder="https://..." />
                </div>
             </div>
