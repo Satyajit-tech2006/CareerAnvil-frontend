@@ -63,5 +63,9 @@ export const ENDPOINTS = {
   NOTES: {
     GET: (itemId) => `/notes/${itemId}`,   // GET /api/v1/notes/:itemId
     SAVE: '/notes',                        // POST /api/v1/notes (Upsert)
+  },
+
+  ATS: {
+    ANALYZE: '/ats/analyze',  // POST /api/v1/ats/analyze
   }
 };
