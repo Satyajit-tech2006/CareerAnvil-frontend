@@ -9,13 +9,14 @@ import apiClient from "@/lib/api";
 
 interface PaymentModalProps {
   plan: "premium" | null;
-  billingCycle: "monthly" | "yearly"; // <--- NEW PROP
+  billingCycle: "monthly" | "yearly"; 
   isOpen: boolean;
   onClose: () => void;
 }
 
 // --- CONFIGURATION ---
 const UPI_ID = "7656999488@ybl";
+const PAYEE_NAME = "CareerAnvil"; // No spaces or special chars
 const QR_IMAGE_PATH = "/UPI_QR.jpeg"; 
 
 export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: PaymentModalProps) {
@@ -25,13 +26,25 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
   
   const queryClient = useQueryClient();
 
-  // --- DYNAMIC AMOUNT CALCULATION ---
-  const amount = billingCycle === "yearly" ? 999 : 1;
+  // --- DYNAMIC AMOUNT (For Testing: ₹1.00) ---
+  // IMPORTANT: UPI apps require 2 decimal places (e.g. "1.00")
+  const rawAmount = billingCycle === "yearly" ? 999 : 1;
+  const amountString = rawAmount.toFixed(2); 
+
+  // --- GENERATE ROBUST UPI LINK ---
+  // 1. Remove spaces from params to prevent breakage
+  // 2. Add 'mc=0000' for better compatibility
+  // 3. Keep 'tn' (Note) short and simple
+  const note = `Premium${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}`;
+  
+  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=${PAYEE_NAME}&mc=0000&mode=02&purpose=00&am=${amountString}&cu=INR&tn=${note}`;
+  
+  // URL Encode the deep link for the QR Generator API
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mobileDeepLink)}`;
 
   // 1. Initiate Payment on Open
   const { mutate: initiate } = useMutation({
     mutationFn: async () => {
-      // Send billingCycle to backend so it sets correct amount (99 or 999)
       const res = await apiClient.post("/payments/initiate", { plan, billingCycle });
       return res.data.data;
     },
@@ -74,9 +87,6 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
     onError: (err: any) => toast.error(err.response?.data?.message || "Failed to submit UTR")
   });
 
-  // Deep link for mobile UPI apps
-  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=CareerAnvil&am=${amount}&tn=${plan} ${billingCycle}&cu=INR`;
-
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="sm:max-w-md">
@@ -96,21 +106,21 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
         {step === "scan" && (
           <div className="space-y-6">
             <div className="bg-white p-4 rounded-xl border flex flex-col items-center justify-center shadow-sm">
-              {/* LOCAL QR IMAGE */}
+              {/* DYNAMIC QR CODE GENERATOR (More reliable than static image for variable amounts) */}
               <img 
-                src={QR_IMAGE_PATH} 
+                src={qrCodeUrl}
                 alt="Scan UPI QR" 
-                className="w-56 h-auto object-contain"
+                className="w-56 h-auto object-contain mix-blend-multiply"
                 onError={(e) => {
-                    // Fallback generator
-                    (e.target as HTMLImageElement).src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mobileDeepLink)}`;
+                    // Fallback to static image if API fails
+                    (e.target as HTMLImageElement).src = QR_IMAGE_PATH;
                 }}
               />
-              <p className="mt-2 text-xs text-muted-foreground">Scan with any UPI App</p>
+              <p className="mt-2 text-xs text-muted-foreground">Scan with PhonePe, GPay, or Paytm</p>
             </div>
             
             <div className="text-center space-y-1">
-              <p className="text-3xl font-bold">₹{amount}</p>
+              <p className="text-3xl font-bold">₹{amountString}</p>
               <div className="flex items-center justify-center gap-2">
                 <span className="text-sm text-muted-foreground font-mono bg-muted px-2 py-1 rounded select-all">
                     {UPI_ID}
