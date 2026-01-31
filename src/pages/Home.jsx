@@ -1,6 +1,6 @@
-import React from "react"
-import { useNavigate } from "react-router-dom"
-import { motion } from "framer-motion"
+import React, { useEffect } from "react"; // Added useEffect
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
   ArrowRight,
   Briefcase,
@@ -10,19 +10,29 @@ import {
   Sparkles,
   Anvil,
   MessageSquare
-} from "lucide-react"
+} from "lucide-react";
 
 // Import the dedicated stylesheet
-import "../styles/Home.css"
+import "../styles/Home.css";
 
 const Home = () => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  // --- FEATURE: AUTO-REDIRECT IF LOGGED IN ---
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken");
+    if (token) {
+      // Optional: You could verify the token validity here, 
+      // but for UX speed, checking existence is usually enough.
+      navigate("/dashboard");
+    }
+  }, [navigate]);
 
   // Animation variants
   const fadeIn = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-  }
+  };
 
   const staggerContainer = {
     hidden: { opacity: 0 },
@@ -30,7 +40,7 @@ const Home = () => {
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  }
+  };
 
   return (
     <div className="home-wrapper">
@@ -202,8 +212,8 @@ const Home = () => {
         </div>
       </footer>
     </div>
-  )
-}
+  );
+};
 
 // --- Sub Components ---
 
@@ -232,13 +242,13 @@ const FeatureCard = ({ icon, title, desc, badge }) => (
       <p className="feature-desc">{desc}</p>
     </div>
   </motion.div>
-)
+);
 
 const Stat = ({ number, label }) => (
   <div className="stat-item">
     <h4>{number}</h4>
     <p>{label}</p>
   </div>
-)
+);
 
-export default Home
+export default Home;

@@ -7,17 +7,32 @@ const apiClient = axios.create({
   withCredentials: true, // Crucial for sending cookies (refreshToken)
 });
 
-let accessToken = '';
+// We no longer rely solely on this variable; we check localStorage too.
+let accessToken = localStorage.getItem('accessToken') || '';
 
 export const setAccessToken = (token) => {
   accessToken = token;
+  if (token) {
+    localStorage.setItem('accessToken', token);
+    // Explicitly set the default header for immediate use
+    apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    // Clear everything if token is explicitly removed (logout)
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('user');
+    delete apiClient.defaults.headers.common['Authorization'];
+  }
 };
 
 // --- Request Interceptor ---
 apiClient.interceptors.request.use(
   (config) => {
-    if (accessToken) {
-      config.headers['Authorization'] = `Bearer ${accessToken}`;
+    // 1. Check in-memory variable
+    // 2. Fallback to localStorage (Fixes "Logout on Reload" issue)
+    const token = accessToken || localStorage.getItem('accessToken');
+    
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
@@ -38,7 +53,8 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       // Prevent infinite loops
       if (originalRequest._retry || originalRequest.url.includes("refresh-token")) {
-        // If refresh fails, redirect to login
+        // If refresh fails, clear storage and redirect
+        setAccessToken(''); // This clears localStorage too
         window.location.href = "/login";
         return Promise.reject(error);
       }
@@ -48,15 +64,22 @@ apiClient.interceptors.response.use(
       try {
         // Attempt to get a new access token
         const response = await apiClient.post(ENDPOINTS.USERS.REFRESH_TOKEN);
-        const { accessToken: newAccessToken } = response.data.data;
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = response.data.data;
 
-        // Update local state and the header for the retry
+        // Update local state, storage, and the header for the retry
         setAccessToken(newAccessToken);
+        
+        // Optional: If your backend sends a new Refresh Token in the body, update it too
+        if (newRefreshToken) {
+            localStorage.setItem('refreshToken', newRefreshToken);
+        }
+
         originalRequest.headers['Authorization'] = `Bearer ${newAccessToken}`;
 
         return apiClient(originalRequest);
       } catch (refreshError) {
         console.error("Session expired:", refreshError);
+        setAccessToken('');
         window.location.href = "/login";
         return Promise.reject(refreshError);
       }
