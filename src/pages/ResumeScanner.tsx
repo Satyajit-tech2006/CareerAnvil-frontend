@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, FileText, CheckCircle2, AlertTriangle, 
-  Sparkles, RefreshCw, Briefcase, ChevronRight, Loader2, Lock, Crown 
+  Sparkles, RefreshCw, Briefcase, ChevronRight, Loader2, Lock, Crown, Building2 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
 
 // API
 import apiClient from '@/lib/api';
@@ -37,11 +38,16 @@ interface AtsResponse {
   };
   creditsLeft?: number;
   suggestions?: string[];
+  companyMatch?: {
+    name: string;
+    score: number;
+    tier: string;
+  }[];
 }
 
 const JOB_ROLES = [
   // --- INTERNSHIPS ---
-  { value: 'sde_intern', label: 'Software Engineer Intern' },
+  { value: 'software_intern', label: 'Software Engineer Intern' },
   { value: 'backend_intern', label: 'Backend Engineering Intern' },
   { value: 'frontend_intern', label: 'Frontend Engineering Intern' },
   { value: 'fullstack_intern', label: 'Full Stack Intern' },
@@ -72,6 +78,15 @@ const JOB_ROLES = [
   { value: 'sales_rep', label: 'Sales Representative (SDR)' },
   { value: 'hr_generalist', label: 'HR Generalist' },
   { value: 'financial_analyst', label: 'Financial Analyst' },
+];
+
+// Mock data for Freemium users (The Bait)
+const DEMO_COMPANIES = [
+  { name: 'Google', tier: 'MAANG', score: 0 },
+  { name: 'Amazon', tier: 'MAANG', score: 0 },
+  { name: 'Microsoft', tier: 'MAANG', score: 0 },
+  { name: 'Netflix', tier: 'MAANG', score: 0 },
+  { name: 'Uber', tier: 'Tech Giant', score: 0 },
 ];
 
 // --- SUB-COMPONENT: CIRCULAR PROGRESS ---
@@ -185,10 +200,6 @@ export default function ResumeScanner() {
         const keywordsArray = customKeywords.split(',')
             .map(k => k.trim())
             .filter(k => k.length > 0);
-        
-        // Log to browser console to verify before sending
-        console.log("Sending Custom Keywords:", keywordsArray); 
-        
         formData.append('customKeywords', JSON.stringify(keywordsArray));
     }
 
@@ -446,6 +457,57 @@ export default function ResumeScanner() {
                         </CardContent>
                      </Card>
                   )}
+
+                  {/* --- NEW SECTION: COMPANY ATS MATCH --- */}
+                  <Card className={cn("transition-all", !isPremium && "border-primary/20 bg-primary/5")}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                           <Building2 className="w-4 h-4 text-primary" /> Top Company Match
+                        </CardTitle>
+                        {!isPremium && <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700 hover:bg-amber-100">Premium Insight</Badge>}
+                      </div>
+                      <CardDescription>
+                         {isPremium ? "Your compatibility with top tech companies." : "Unlock to see how you score against top tech giants."}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                       <div className="space-y-4">
+                          {(isPremium && result.companyMatch && result.companyMatch.length > 0 ? result.companyMatch : DEMO_COMPANIES).map((company, i) => (
+                             <div key={company.name} className="relative">
+                                <div className={cn("flex items-center justify-between text-sm mb-1.5", !isPremium && "blur-[3px] opacity-70 select-none")}>
+                                   <div className="flex items-center gap-2">
+                                      <span className="font-medium">{company.name}</span>
+                                      <Badge variant="outline" className="text-[10px] h-5 px-1.5 text-muted-foreground">{company.tier}</Badge>
+                                   </div>
+                                   <span className={cn("font-bold", company.score >= 70 ? "text-green-600" : "text-amber-600")}>
+                                      {company.score}%
+                                   </span>
+                                </div>
+                                <Progress value={company.score} className={cn("h-2", !isPremium && "blur-[2px] opacity-50")} />
+                             </div>
+                          ))}
+
+                          {/* FREEMIUM OVERLAY (THE BAIT) */}
+                          {!isPremium && (
+                             <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/10 backdrop-blur-[1px] rounded-lg z-10">
+                                <div className="p-4 bg-background/95 shadow-xl border rounded-xl text-center space-y-3 max-w-[280px]">
+                                   <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
+                                      <Lock className="w-5 h-5" />
+                                   </div>
+                                   <div>
+                                      <h4 className="font-bold text-sm">Unlock Company Scores</h4>
+                                      <p className="text-xs text-muted-foreground mt-1">See exactly how your resume scores against Google, Amazon, & more.</p>
+                                   </div>
+                                   <Button size="sm" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" onClick={() => navigate('/planning')}>
+                                      Upgrade to Reveal
+                                   </Button>
+                                </div>
+                             </div>
+                          )}
+                       </div>
+                    </CardContent>
+                  </Card>
 
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* STRUCTURE CHECK */}
