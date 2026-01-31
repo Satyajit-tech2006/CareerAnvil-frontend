@@ -35,11 +35,38 @@ interface AtsResponse {
 }
 
 const JOB_ROLES = [
-  { value: 'software_intern', label: 'Software Engineer Intern' },
-  { value: 'frontend_dev', label: 'Frontend Developer' },
+  // --- INTERNSHIPS ---
+  { value: 'sde_intern', label: 'Software Engineer Intern' },
+  { value: 'backend_intern', label: 'Backend Engineering Intern' },
+  { value: 'frontend_intern', label: 'Frontend Engineering Intern' },
+  { value: 'fullstack_intern', label: 'Full Stack Intern' },
+
+  // --- ENGINEERING (FULL TIME) ---
+  { value: 'software_engineer', label: 'Software Engineer (General)' },
   { value: 'backend_dev', label: 'Backend Developer' },
+  { value: 'frontend_dev', label: 'Frontend Developer' },
+  { value: 'fullstack_dev', label: 'Full Stack Developer' },
+
+  // --- DATA & AI ---
   { value: 'data_analyst', label: 'Data Analyst' },
-  { value: 'ml_engineer', label: 'Machine Learning Engineer' }
+  { value: 'data_scientist', label: 'Data Scientist' },
+  { value: 'ml_engineer', label: 'Machine Learning Engineer' },
+  { value: 'ai_engineer', label: 'AI Engineer' },
+
+  // --- INFRASTRUCTURE ---
+  { value: 'devops_engineer', label: 'DevOps Engineer' },
+  { value: 'cloud_engineer', label: 'Cloud Engineer' },
+  { value: 'security_engineer', label: 'Security Engineer' },
+
+  // --- PRODUCT & DESIGN ---
+  { value: 'product_manager', label: 'Product Manager' },
+  { value: 'ui_ux_designer', label: 'UI/UX Designer' },
+  
+  // --- BUSINESS ---
+  { value: 'digital_marketing', label: 'Digital Marketing' },
+  { value: 'sales_rep', label: 'Sales Representative (SDR)' },
+  { value: 'hr_generalist', label: 'HR Generalist' },
+  { value: 'financial_analyst', label: 'Financial Analyst' },
 ];
 
 // --- SUB-COMPONENT: CIRCULAR PROGRESS ---
