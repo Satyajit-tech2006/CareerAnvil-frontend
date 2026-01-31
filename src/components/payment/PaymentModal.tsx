@@ -16,7 +16,7 @@ interface PaymentModalProps {
 
 // --- CONFIGURATION ---
 const UPI_ID = "7656999488@ybl";
-const PAYEE_NAME = "CareerAnvil"; // No spaces or special chars
+const PAYEE_NAME = "CareerAnvil"; 
 const QR_IMAGE_PATH = "/UPI_QR.jpeg"; 
 
 export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: PaymentModalProps) {
@@ -26,20 +26,18 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
   
   const queryClient = useQueryClient();
 
-  // --- DYNAMIC AMOUNT (For Testing: ₹1.00) ---
-  // IMPORTANT: UPI apps require 2 decimal places (e.g. "1.00")
+  // --- DYNAMIC AMOUNT (Testing: ₹1.00) ---
   const rawAmount = billingCycle === "yearly" ? 999 : 1;
-  const amountString = rawAmount.toFixed(2); 
+  const amountString = rawAmount.toFixed(2); // "1.00"
 
-  // --- GENERATE ROBUST UPI LINK ---
-  // 1. Remove spaces from params to prevent breakage
-  // 2. Add 'mc=0000' for better compatibility
-  // 3. Keep 'tn' (Note) short and simple
-  const note = `Premium${billingCycle === 'yearly' ? 'Yearly' : 'Monthly'}`;
+  // --- SIMPLEST COMPATIBLE UPI LINK (P2P) ---
+  // 1. Removed 'mc', 'mode', 'purpose' (Causes "Not Supported" on personal IDs)
+  // 2. Kept only mandatory fields: pa, pn, am, cu, tn
+  // 3. Encoded 'tn' properly
+  const note = `Premium ${billingCycle}`;
+  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${amountString}&cu=INR&tn=${encodeURIComponent(note)}`;
   
-  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=${PAYEE_NAME}&mc=0000&mode=02&purpose=00&am=${amountString}&cu=INR&tn=${note}`;
-  
-  // URL Encode the deep link for the QR Generator API
+  // Generate QR from this simple link
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mobileDeepLink)}`;
 
   // 1. Initiate Payment on Open
@@ -106,7 +104,7 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
         {step === "scan" && (
           <div className="space-y-6">
             <div className="bg-white p-4 rounded-xl border flex flex-col items-center justify-center shadow-sm">
-              {/* DYNAMIC QR CODE GENERATOR (More reliable than static image for variable amounts) */}
+              {/* DYNAMIC QR CODE */}
               <img 
                 src={qrCodeUrl}
                 alt="Scan UPI QR" 
