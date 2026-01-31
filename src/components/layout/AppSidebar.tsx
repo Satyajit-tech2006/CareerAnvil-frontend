@@ -35,6 +35,7 @@ interface UserData {
   email: string;
   avatar?: string;
   role?: string; 
+  subscription?: 'free' | 'premium' | 'premium_pro';
 }
 
 interface SidebarContentProps {
@@ -194,7 +195,12 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
-                 {/* Optional: Add Premium Badge here if you want */}
+                 {/* Premium Badge */}
+                  {(user?.subscription === 'premium' || user?.subscription === 'premium_pro') && (
+                    <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded ml-2 shadow-sm">
+                       <Sparkles className="w-2 h-2 fill-current" /> PRO
+                    </span>
+                  )}
               </div>
               <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 {displayEmail} 
