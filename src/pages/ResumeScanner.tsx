@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Upload, FileText, CheckCircle2, AlertTriangle, 
-  Sparkles, RefreshCw, Briefcase, ChevronRight, Loader2, Lock, Crown, Building2 
+  Sparkles, RefreshCw, Briefcase, ChevronRight, Loader2, Lock, Crown, Building2, X 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -145,6 +145,7 @@ export default function ResumeScanner() {
   const [role, setRole] = useState<string>('');
   const [customKeywords, setCustomKeywords] = useState<string>(''); 
   const [result, setResult] = useState<AtsResponse | null>(null);
+  const [showUnlockOverlay, setShowUnlockOverlay] = useState(true); // Control visibility of the unlock overlay
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // API Mutation
@@ -157,6 +158,7 @@ export default function ResumeScanner() {
     },
     onSuccess: (data) => {
       setResult(data);
+      setShowUnlockOverlay(true); // Reset overlay on new scan
       toast.success("Analysis complete!");
     },
     onError: (error: any) => {
@@ -272,11 +274,11 @@ export default function ResumeScanner() {
                 {/* 2. Custom Keywords (Premium) */}
                 <div className="space-y-2 relative">
                   <div className="flex items-center justify-between">
-                     <label className="text-sm font-medium flex items-center gap-2">
-                       Custom Job Keywords
-                       {!isPremium && <Lock className="w-3 h-3 text-muted-foreground" />}
-                     </label>
-                     {!isPremium && <span className="text-xs text-amber-600 font-bold">Premium Only</span>}
+                      <label className="text-sm font-medium flex items-center gap-2">
+                        Custom Job Keywords
+                        {!isPremium && <Lock className="w-3 h-3 text-muted-foreground" />}
+                      </label>
+                      {!isPremium && <span className="text-xs text-amber-600 font-bold">Premium Only</span>}
                   </div>
                   
                   <div className="relative group">
@@ -435,27 +437,27 @@ export default function ResumeScanner() {
 
                   {/* PREMIUM KEYWORD RESULTS */}
                   {result.matchedCustomKeywords && (result.matchedCustomKeywords.length > 0 || (result.missingCustomKeywords && result.missingCustomKeywords.length > 0)) && (
-                     <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-900/10">
-                        <CardHeader className="pb-3">
-                           <CardTitle className="text-sm font-bold text-amber-600 flex items-center gap-2">
-                             <Crown className="w-4 h-4" /> Custom Keywords Match
-                           </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                           <div className="flex flex-wrap gap-2">
-                              {result.matchedCustomKeywords.map(k => (
-                                 <Badge key={k} className="bg-green-600 hover:bg-green-700 text-white border-0">
-                                   <CheckCircle2 className="w-3 h-3 mr-1" /> {k}
-                                 </Badge>
-                              ))}
-                              {result.missingCustomKeywords?.map(k => (
-                                 <Badge key={k} variant="outline" className="border-red-200 text-red-600 bg-red-50">
-                                   <AlertTriangle className="w-3 h-3 mr-1" /> {k}
-                                 </Badge>
-                              ))}
-                           </div>
-                        </CardContent>
-                     </Card>
+                      <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-900/10">
+                         <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-bold text-amber-600 flex items-center gap-2">
+                              <Crown className="w-4 h-4" /> Custom Keywords Match
+                            </CardTitle>
+                         </CardHeader>
+                         <CardContent>
+                            <div className="flex flex-wrap gap-2">
+                               {result.matchedCustomKeywords.map(k => (
+                                  <Badge key={k} className="bg-green-600 hover:bg-green-700 text-white border-0">
+                                    <CheckCircle2 className="w-3 h-3 mr-1" /> {k}
+                                  </Badge>
+                               ))}
+                               {result.missingCustomKeywords?.map(k => (
+                                  <Badge key={k} variant="outline" className="border-red-200 text-red-600 bg-red-50">
+                                    <AlertTriangle className="w-3 h-3 mr-1" /> {k}
+                                  </Badge>
+                               ))}
+                            </div>
+                         </CardContent>
+                      </Card>
                   )}
 
                   {/* --- NEW SECTION: COMPANY ATS MATCH --- */}
@@ -472,7 +474,7 @@ export default function ResumeScanner() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                       <div className="space-y-4">
+                       <div className="space-y-4 relative">
                           {(isPremium && result.companyMatch && result.companyMatch.length > 0 ? result.companyMatch : DEMO_COMPANIES).map((company, i) => (
                              <div key={company.name} className="relative">
                                 <div className={cn("flex items-center justify-between text-sm mb-1.5", !isPremium && "blur-[3px] opacity-70 select-none")}>
@@ -489,9 +491,21 @@ export default function ResumeScanner() {
                           ))}
 
                           {/* FREEMIUM OVERLAY (THE BAIT) */}
-                          {!isPremium && (
+                          {!isPremium && showUnlockOverlay && (
                              <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/10 backdrop-blur-[1px] rounded-lg z-10">
-                                <div className="p-4 bg-background/95 shadow-xl border rounded-xl text-center space-y-3 max-w-[280px]">
+                                <div className="p-4 bg-background/95 shadow-xl border rounded-xl text-center space-y-3 max-w-[280px] relative">
+                                   {/* CLOSE BUTTON */}
+                                   <button 
+                                     onClick={(e) => {
+                                       e.stopPropagation();
+                                       setShowUnlockOverlay(false);
+                                     }}
+                                     className="absolute top-2 right-2 text-muted-foreground hover:text-foreground transition-colors p-1"
+                                     aria-label="Close unlock offer"
+                                   >
+                                     <X className="w-4 h-4" />
+                                   </button>
+
                                    <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto text-amber-600">
                                       <Lock className="w-5 h-5" />
                                    </div>
