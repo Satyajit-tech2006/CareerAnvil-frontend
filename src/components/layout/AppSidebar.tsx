@@ -185,22 +185,29 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
           "flex items-center gap-3 px-3 py-3 mt-2 rounded-lg bg-accent/30 border border-border/50",
           collapsed && "justify-center p-2"
         )}>
-          <Avatar className="w-9 h-9 border border-border">
+          <Avatar className={cn(
+            "w-9 h-9 border border-border transition-all",
+            // THE NEW GOOGLE-STYLE RING LOGIC:
+            (user?.subscription === 'premium' || user?.subscription === 'premium_pro') && 
+            "ring-2 ring-amber-500 ring-offset-2 ring-offset-card"
+          )}>
             <AvatarImage src={user?.avatar} />
             <AvatarFallback className="bg-primary/10 text-primary font-medium">
               {getInitials(displayName)}
             </AvatarFallback>
           </Avatar>
+          
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                  <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                 
                  {/* Premium Badge */}
-                  {(user?.subscription === 'premium' || user?.subscription === 'premium_pro') && (
+                 {(user?.subscription === 'premium' || user?.subscription === 'premium_pro') && (
                     <span className="flex items-center gap-0.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded ml-2 shadow-sm">
                        <Sparkles className="w-2 h-2 fill-current" /> PRO
                     </span>
-                  )}
+                 )}
               </div>
               <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 {displayEmail} 
