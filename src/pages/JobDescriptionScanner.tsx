@@ -24,33 +24,18 @@ export default function JobDescriptionScanner() {
   const [copied, setCopied] = useState(false);
   const queryClient = useQueryClient();
 
-  // 1. Fetch User (to check credits)
-  const { data: userProfile } = useQuery({
-    queryKey: ['currentUser'],
+  // 1. Fetch Credits (Fixed: Now calls the dedicated credits endpoint)
+  const { data: creditsData, isLoading: isLoadingCredits } = useQuery({
+    queryKey: ['atsCredits'],
     queryFn: async () => {
-      const res = await apiClient.get(ENDPOINTS.USERS.CURRENT_USER);
+      const res = await apiClient.get(ENDPOINTS.ATS.GET_CREDITS);
       return res.data.data;
     },
-    retry: false
+    retry: false,
+    refetchOnWindowFocus: true
   });
 
-  // 2. Fetch Credits (Live updates)
-  const { data: credits, isLoading: isLoadingCredits } = useQuery({
-    queryKey: ['credits'],
-    queryFn: async () => {
-       // We can actually just refresh user profile or have a dedicated credits endpoint
-       // For now, let's assume the user object has the latest or we refetch it
-       const res = await apiClient.get(ENDPOINTS.USERS.CURRENT_USER); // Re-using for simplicity
-       // We need to fetch the dedicated credits object if it's separate, 
-       // but typically we attach it to the user or have a specific route.
-       // Assuming your user object now has `credits` populated or you fetch it separately.
-       // If you don't have a direct /credits endpoint, we can ignore this 
-       // and rely on the mutation response to update the UI.
-       return null; 
-    }
-  });
-
-  // 3. Extraction Mutation
+  // 2. Extraction Mutation
   const { mutate: extractKeywords, isPending } = useMutation({
     mutationFn: async (text: string) => {
       const res = await apiClient.post(ENDPOINTS.ATS.EXTRACT_KEYWORDS, { description: text });
@@ -59,8 +44,8 @@ export default function JobDescriptionScanner() {
     onSuccess: (data) => {
       setResultCsv(data.csv);
       toast.success("Keywords extracted!");
-      // Invalidate queries to refresh credit count shown in UI
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
+      // Refresh credits immediately after use
+      queryClient.invalidateQueries({ queryKey: ['atsCredits'] });
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Extraction failed");
@@ -84,11 +69,6 @@ export default function JobDescriptionScanner() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Safe credit access (assuming you might attach it to user response or fetch separately)
-  // Since we updated the backend to return credits in the response, we can use local state 
-  // or just rely on the user profile refetch.
-  // For this UI, let's assume we read it from the `extractKeywords` response mostly.
-  
   return (
     <div className="min-h-screen bg-background pb-20">
       
@@ -108,7 +88,7 @@ export default function JobDescriptionScanner() {
              {/* Credit Counter */}
              <div className="hidden md:block text-right">
                 <Badge variant="secondary" className="px-3 py-1.5 text-xs font-medium bg-primary/10 text-primary border-primary/20">
-                   {isLoadingCredits ? "..." : (userProfile?.jdKeywordsCredits ?? 0) } Credits Left
+                   {isLoadingCredits ? "..." : (creditsData?.jdCredits ?? 0) } Credits Left
                 </Badge>
              </div>
           </div>

@@ -69,5 +69,7 @@ export const ENDPOINTS = {
   ATS: {
     ANALYZE: '/ats/analyze',               // POST /api/v1/ats/analyze
     EXTRACT_KEYWORDS: '/ats/extract-keywords', // POST /api/v1/ats/extract-keywords
+    GET_CREDITS: '/ats/credits',           // GET /api/v1/ats/credits
+  
   }
 };
