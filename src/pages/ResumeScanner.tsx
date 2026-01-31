@@ -1,9 +1,10 @@
 import { useState, useCallback, useRef } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Upload, FileText, CheckCircle2, XCircle, AlertTriangle, 
-  Sparkles, RefreshCw, Briefcase, ChevronRight, Loader2 
+  Upload, FileText, CheckCircle2, AlertTriangle, 
+  Sparkles, RefreshCw, Briefcase, ChevronRight, Loader2, Lock, Crown 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 
 // API
 import apiClient from '@/lib/api';
@@ -25,6 +27,8 @@ interface AtsResponse {
   role: string;
   matchedKeywords: string[];
   missingKeywords: string[];
+  matchedCustomKeywords?: string[];
+  missingCustomKeywords?: string[];
   sectionsDetected: {
     hasSkills: boolean;
     hasExperience: boolean;
@@ -32,6 +36,7 @@ interface AtsResponse {
     hasProjects: boolean;
   };
   creditsLeft?: number;
+  suggestions?: string[];
 }
 
 const JOB_ROLES = [
@@ -83,41 +88,25 @@ function CircularProgress({ score }: { score: number }) {
   return (
     <div className="relative w-40 h-40 mx-auto group">
       <svg className="w-full h-full -rotate-90 transform transition-all duration-700" viewBox="0 0 100 100">
-        {/* Background Circle */}
-        <circle
-          cx="50" cy="50" r="45"
-          fill="none"
-          className="stroke-muted/20"
-          strokeWidth="8"
-        />
-        {/* Progress Circle */}
+        <circle cx="50" cy="50" r="45" fill="none" className="stroke-muted/20" strokeWidth="8" />
         <motion.circle
-          cx="50" cy="50" r="45"
-          fill="none"
+          cx="50" cy="50" r="45" fill="none"
           className={cn("transition-colors duration-500", getColor(score).split(' ')[1])}
-          strokeWidth="8"
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset }}
+          strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference}
+          initial={{ strokeDashoffset: circumference }} animate={{ strokeDashoffset }}
           transition={{ duration: 1.5, ease: 'easeOut' }}
         />
       </svg>
-      
-      {/* Center Text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <motion.span 
           className={cn("text-5xl font-bold tracking-tighter", getColor(score).split(' ')[0])}
-          initial={{ opacity: 0, scale: 0.5 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5, duration: 0.3 }}
         >
           {score}
         </motion.span>
         <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">Score</span>
       </div>
-      
-      {/* Glow Effect */}
       <div className={cn("absolute inset-0 rounded-full blur-3xl opacity-10", getColor(score).split(' ')[0].replace('text-', 'bg-'))} />
     </div>
   );
@@ -125,8 +114,21 @@ function CircularProgress({ score }: { score: number }) {
 
 // --- MAIN COMPONENT ---
 export default function ResumeScanner() {
+  const navigate = useNavigate();
+  const { data: userProfile } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: async () => {
+      const res = await apiClient.get('/users/current-user');
+      return res.data.data;
+    },
+    retry: false
+  });
+
+  const isPremium = userProfile?.subscription === 'premium' || userProfile?.subscription === 'premium pro';
+  
   const [file, setFile] = useState<File | null>(null);
   const [role, setRole] = useState<string>('');
+  const [customKeywords, setCustomKeywords] = useState<string>(''); 
   const [result, setResult] = useState<AtsResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -174,8 +176,25 @@ export default function ResumeScanner() {
       return;
     }
     const formData = new FormData();
-    formData.append('resume', file);
+    
+    // 🚨 IMPORTANT: Text fields MUST be appended BEFORE the file
     formData.append('role', role);
+    
+    // Handle the custom keywords array
+    if (customKeywords.trim()) {
+        const keywordsArray = customKeywords.split(',')
+            .map(k => k.trim())
+            .filter(k => k.length > 0);
+        
+        // Log to browser console to verify before sending
+        console.log("Sending Custom Keywords:", keywordsArray); 
+        
+        formData.append('customKeywords', JSON.stringify(keywordsArray));
+    }
+
+    // Append file LAST
+    formData.append('resume', file);
+    
     analyzeResume(formData);
   };
 
@@ -190,14 +209,25 @@ export default function ResumeScanner() {
       
       {/* Header */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container max-w-6xl py-6">
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary fill-primary/10" />
-            Resume Scanner
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            AI-powered analysis to beat the Applicant Tracking System (ATS).
-          </p>
+        <div className="container max-w-6xl py-6 flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+              <Sparkles className="w-6 h-6 text-primary fill-primary/10" />
+              Resume Scanner
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              AI-powered analysis to beat the Applicant Tracking System (ATS).
+            </p>
+          </div>
+          {isPremium ? (
+             <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 gap-1 px-3 py-1">
+               <Crown className="w-3.5 h-3.5 fill-current" /> Premium Active
+             </Badge>
+          ) : (
+             <Badge variant="outline" className="text-muted-foreground gap-1">
+               Free Plan
+             </Badge>
+          )}
         </div>
       </div>
       
@@ -215,7 +245,7 @@ export default function ResumeScanner() {
                 
                 {/* 1. Role Selection */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Target Role</label>
+                  <label className="text-sm font-medium">Target Role</label>
                   <Select value={role} onValueChange={setRole} disabled={isPending}>
                     <SelectTrigger className="h-11">
                       <SelectValue placeholder="Select job role..." />
@@ -228,9 +258,42 @@ export default function ResumeScanner() {
                   </Select>
                 </div>
 
+                {/* 2. Custom Keywords (Premium) */}
+                <div className="space-y-2 relative">
+                  <div className="flex items-center justify-between">
+                     <label className="text-sm font-medium flex items-center gap-2">
+                       Custom Job Keywords
+                       {!isPremium && <Lock className="w-3 h-3 text-muted-foreground" />}
+                     </label>
+                     {!isPremium && <span className="text-xs text-amber-600 font-bold">Premium Only</span>}
+                  </div>
+                  
+                  <div className="relative group">
+                    <Textarea 
+                      placeholder={isPremium ? "Paste keywords from the Job Description (e.g. React, AWS, Docker)..." : "Upgrade to Premium to check against specific job descriptions."}
+                      className={cn("min-h-[80px] resize-none pr-8", !isPremium && "opacity-50 blur-[1px] select-none pointer-events-none bg-muted")}
+                      value={customKeywords}
+                      onChange={(e) => setCustomKeywords(e.target.value)}
+                      disabled={!isPremium}
+                    />
+                    {!isPremium && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-background/50 backdrop-blur-[1px] rounded-md transition-opacity">
+                        <Button 
+                          variant="secondary" 
+                          size="sm" 
+                          className="shadow-lg gap-2 cursor-pointer z-10 hover:bg-primary hover:text-primary-foreground transition-all" 
+                          onClick={() => navigate('/planning')}
+                        >
+                           <Lock className="w-3.5 h-3.5" /> Unlock Feature
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <Separator />
 
-                {/* 2. File Upload */}
+                {/* 3. File Upload */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none">Upload Resume</label>
                   <AnimatePresence mode="wait">
@@ -250,13 +313,7 @@ export default function ResumeScanner() {
                           <p className="text-sm font-medium">Click to upload or drag & drop</p>
                           <p className="text-xs text-muted-foreground">PDF only (Max 5MB)</p>
                         </div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept=".pdf"
-                          className="hidden"
-                          onChange={handleFileInput}
-                        />
+                        <input ref={fileInputRef} type="file" accept=".pdf" className="hidden" onChange={handleFileInput} />
                       </motion.div>
                     ) : (
                       <motion.div
@@ -281,7 +338,7 @@ export default function ResumeScanner() {
                   </AnimatePresence>
                 </div>
 
-                {/* 3. Action Button */}
+                {/* 4. Action Button */}
                 <Button 
                   className="w-full h-11 text-base font-medium shadow-sm" 
                   onClick={handleAnalyze} 
@@ -322,26 +379,15 @@ export default function ResumeScanner() {
                   {isPending ? (
                     <div className="space-y-4">
                       <div className="relative w-20 h-20 mx-auto">
-                        <motion.div 
-                          className="absolute inset-0 border-4 border-primary/30 rounded-full" 
-                        />
-                        <motion.div 
-                          className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full" 
-                          animate={{ rotate: 360 }}
-                          transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <Sparkles className="w-8 h-8 text-primary animate-pulse" />
-                        </div>
+                        <motion.div className="absolute inset-0 border-4 border-primary/30 rounded-full" />
+                        <motion.div className="absolute inset-0 border-4 border-primary border-t-transparent rounded-full" animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} />
+                        <div className="absolute inset-0 flex items-center justify-center"><Sparkles className="w-8 h-8 text-primary animate-pulse" /></div>
                       </div>
                       <h3 className="text-lg font-medium text-foreground">Analyzing your resume...</h3>
-                      <p className="max-w-xs mx-auto text-sm">We are checking keywords, formatting, and section structure against standard ATS rules.</p>
                     </div>
                   ) : (
                     <>
-                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                        <Briefcase className="w-8 h-8 opacity-50" />
-                      </div>
+                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4"><Briefcase className="w-8 h-8 opacity-50" /></div>
                       <h3 className="text-lg font-medium text-foreground mb-1">Ready to Scan</h3>
                       <p className="max-w-sm mx-auto text-sm">Select a role and upload your resume on the left to get a detailed ATS compatibility report.</p>
                     </>
@@ -356,58 +402,65 @@ export default function ResumeScanner() {
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                   className="space-y-6"
                 >
-                  
                   {/* TOP CARD: SCORE */}
                   <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-card to-muted/30">
                     <CardContent className="p-8">
                       <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
-                        <div className="flex-shrink-0">
-                          <CircularProgress score={result.score} />
-                        </div>
+                        <div className="flex-shrink-0"><CircularProgress score={result.score} /></div>
                         <div className="text-center md:text-left space-y-2 flex-1">
                           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-background border text-sm font-medium shadow-sm mb-2">
                             <Briefcase className="w-3.5 h-3.5 text-muted-foreground" />
                             {result.role}
                           </div>
-                          <h2 className="text-2xl font-bold">
-                            {result.score >= 80 ? "Excellent Match!" : result.score >= 50 ? "Good Potential" : "Needs Optimization"}
-                          </h2>
+                          <h2 className="text-2xl font-bold">{result.score >= 80 ? "Excellent Match!" : result.score >= 50 ? "Good Potential" : "Needs Optimization"}</h2>
                           <p className="text-muted-foreground">
-                            {result.score >= 80 
-                              ? "Your resume is highly optimized for this role. You are ready to apply!" 
-                              : result.score >= 50
-                              ? "You have the basics down, but missing some key technical skills or sections."
-                              : "Your resume might be filtered out by bots. Focus on adding the missing keywords below."
-                            }
+                            {result.score >= 80 ? "Your resume is highly optimized for this role." : result.score >= 50 ? "You have the basics down, but missing some key skills." : "Your resume might be filtered out by bots."}
                           </p>
                         </div>
-                        <Button variant="outline" size="icon" onClick={resetScanner} className="hidden md:flex shrink-0 h-10 w-10 rounded-full" title="Scan new">
-                          <RefreshCw className="w-4 h-4" />
-                        </Button>
+                        <Button variant="outline" size="icon" onClick={resetScanner} className="hidden md:flex shrink-0 h-10 w-10 rounded-full" title="Scan new"><RefreshCw className="w-4 h-4" /></Button>
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* PREMIUM KEYWORD RESULTS */}
+                  {result.matchedCustomKeywords && (result.matchedCustomKeywords.length > 0 || (result.missingCustomKeywords && result.missingCustomKeywords.length > 0)) && (
+                     <Card className="border-amber-200 bg-amber-50/50 dark:bg-amber-900/10">
+                        <CardHeader className="pb-3">
+                           <CardTitle className="text-sm font-bold text-amber-600 flex items-center gap-2">
+                             <Crown className="w-4 h-4" /> Custom Keywords Match
+                           </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                           <div className="flex flex-wrap gap-2">
+                              {result.matchedCustomKeywords.map(k => (
+                                 <Badge key={k} className="bg-green-600 hover:bg-green-700 text-white border-0">
+                                   <CheckCircle2 className="w-3 h-3 mr-1" /> {k}
+                                 </Badge>
+                              ))}
+                              {result.missingCustomKeywords?.map(k => (
+                                 <Badge key={k} variant="outline" className="border-red-200 text-red-600 bg-red-50">
+                                   <AlertTriangle className="w-3 h-3 mr-1" /> {k}
+                                 </Badge>
+                              ))}
+                           </div>
+                        </CardContent>
+                     </Card>
+                  )}
 
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* STRUCTURE CHECK */}
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-primary" /> Structure Analysis
-                        </CardTitle>
+                        <CardTitle className="text-base flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Structure Analysis</CardTitle>
                       </CardHeader>
                       <CardContent className="grid gap-3">
                         {Object.entries(result.sectionsDetected).map(([key, found]) => (
                           <div key={key} className="flex items-center justify-between p-2.5 rounded-lg border bg-card/50 hover:bg-card transition-colors">
                             <span className="text-sm font-medium capitalize">{key.replace('has', '')} Section</span>
                             {found ? (
-                              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 gap-1 hover:bg-green-500/20">
-                                <CheckCircle2 className="w-3 h-3" /> Found
-                              </Badge>
+                              <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-200 gap-1 hover:bg-green-500/20"><CheckCircle2 className="w-3 h-3" /> Found</Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 gap-1 hover:bg-red-500/20">
-                                <AlertTriangle className="w-3 h-3" /> Missing
-                              </Badge>
+                              <Badge variant="outline" className="bg-red-500/10 text-red-600 border-red-200 gap-1 hover:bg-red-500/20"><AlertTriangle className="w-3 h-3" /> Missing</Badge>
                             )}
                           </div>
                         ))}
@@ -417,32 +470,18 @@ export default function ResumeScanner() {
                     {/* MISSING KEYWORDS */}
                     <Card className="border-red-200/50 bg-red-50/10 dark:bg-red-900/5">
                       <CardHeader>
-                        <CardTitle className="text-base flex items-center gap-2 text-red-600 dark:text-red-400">
-                          <AlertTriangle className="w-4 h-4" /> Missing Keywords
-                        </CardTitle>
+                        <CardTitle className="text-base flex items-center gap-2 text-red-600 dark:text-red-400"><AlertTriangle className="w-4 h-4" /> Missing Keywords</CardTitle>
                       </CardHeader>
                       <CardContent>
                         {result.missingKeywords.length > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {result.missingKeywords.slice(0, 10).map((keyword) => (
-                              <span 
-                                key={keyword} 
-                                className="px-2.5 py-1 rounded-md bg-background border border-red-200 text-red-600 text-xs font-medium shadow-sm"
-                              >
-                                {keyword}
-                              </span>
+                              <span key={keyword} className="px-2.5 py-1 rounded-md bg-background border border-red-200 text-red-600 text-xs font-medium shadow-sm">{keyword}</span>
                             ))}
-                            {result.missingKeywords.length > 10 && (
-                              <span className="px-2.5 py-1 text-xs text-muted-foreground">
-                                +{result.missingKeywords.length - 10} more
-                              </span>
-                            )}
+                            {result.missingKeywords.length > 10 && <span className="px-2.5 py-1 text-xs text-muted-foreground">+{result.missingKeywords.length - 10} more</span>}
                           </div>
                         ) : (
-                          <div className="flex flex-col items-center justify-center py-6 text-green-600">
-                            <CheckCircle2 className="w-8 h-8 mb-2 opacity-50" />
-                            <p className="text-sm font-medium">Perfect! No keywords missing.</p>
-                          </div>
+                          <div className="flex flex-col items-center justify-center py-6 text-green-600"><CheckCircle2 className="w-8 h-8 mb-2 opacity-50" /><p className="text-sm font-medium">Perfect! No keywords missing.</p></div>
                         )}
                       </CardContent>
                     </Card>
@@ -451,20 +490,13 @@ export default function ResumeScanner() {
                   {/* MATCHED KEYWORDS */}
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2 text-green-600 dark:text-green-400">
-                        <CheckCircle2 className="w-4 h-4" /> Matched Keywords ({result.matchedKeywords.length})
-                      </CardTitle>
+                      <CardTitle className="text-base flex items-center gap-2 text-green-600 dark:text-green-400"><CheckCircle2 className="w-4 h-4" /> Matched Keywords ({result.matchedKeywords.length})</CardTitle>
                     </CardHeader>
                     <CardContent>
                       {result.matchedKeywords.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {result.matchedKeywords.map((keyword) => (
-                            <span 
-                              key={keyword} 
-                              className="px-2.5 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 text-xs font-medium dark:bg-green-900/20 dark:text-green-300 dark:border-green-800"
-                            >
-                              {keyword}
-                            </span>
+                            <span key={keyword} className="px-2.5 py-1 rounded-md bg-green-50 text-green-700 border border-green-200 text-xs font-medium dark:bg-green-900/20 dark:text-green-300 dark:border-green-800">{keyword}</span>
                           ))}
                         </div>
                       ) : (
@@ -472,6 +504,21 @@ export default function ResumeScanner() {
                       )}
                     </CardContent>
                   </Card>
+
+                  {/* SUGGESTIONS (Optional if backend provides) */}
+                  {result.suggestions && result.suggestions.length > 0 && (
+                    <Card>
+                        <CardHeader><CardTitle className="text-lg">Improvement Plan</CardTitle></CardHeader>
+                        <CardContent className="grid gap-3">
+                           {result.suggestions.map((s, i) => (
+                              <div key={i} className="flex gap-3 text-sm">
+                                 <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-xs">{i+1}</span>
+                                 <span className="text-muted-foreground">{s}</span>
+                              </div>
+                           ))}
+                        </CardContent>
+                    </Card>
+                  )}
 
                 </motion.div>
               )}
