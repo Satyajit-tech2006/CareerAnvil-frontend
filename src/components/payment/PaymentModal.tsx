@@ -26,7 +26,7 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
   const queryClient = useQueryClient();
 
   // --- DYNAMIC AMOUNT CALCULATION ---
-  const amount = billingCycle === "yearly" ? 999 : 99;
+  const amount = billingCycle === "yearly" ? 999 : 1;
 
   // 1. Initiate Payment on Open
   const { mutate: initiate } = useMutation({
