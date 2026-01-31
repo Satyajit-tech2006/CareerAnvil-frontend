@@ -13,7 +13,9 @@ import {
   Sparkles,        
   FileSearch,      
   Database,      
-  Lock           
+  Lock,
+  CreditCard,    // <--- NEW: For Subscription
+  Wallet         // <--- NEW: For Admin Payments
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -49,10 +51,12 @@ const userNavItems = [
   { icon: FileSearch, label: 'Resume Scanner', path: '/scanner' },  
   { icon: Layers, label: 'Sheets', path: '/sheets' },               
   { icon: Sparkles, label: 'JD Extractor', path: '/jd-scanner' },
+  { icon: CreditCard, label: 'Subscription', path: '/pricing' }, // <--- NEW LINK
 ];
 
 const adminNavItems = [
   { icon: Database, label: 'Manage Sheets', path: '/admin/sheets' },
+  { icon: Wallet, label: 'Payment Approvals', path: '/admin/payments' }, // <--- NEW LINK
 ];
 
 function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentProps) {
@@ -188,7 +192,10 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+              <div className="flex items-center gap-2">
+                 <p className="text-sm font-medium text-foreground truncate">{displayName}</p>
+                 {/* Optional: Add Premium Badge here if you want */}
+              </div>
               <p className="text-xs text-muted-foreground truncate flex items-center gap-1">
                 {displayEmail} 
                 {isAdmin && <span className="text-[10px] bg-primary text-primary-foreground px-1 rounded ml-1">ADMIN</span>}
