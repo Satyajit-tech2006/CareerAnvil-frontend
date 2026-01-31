@@ -4,16 +4,17 @@ import { motion } from "framer-motion"
 import {
   ArrowRight,
   Briefcase,
-  FileText,
   FileSearch,
   Users,
   Code2,
-  Rocket,
-  Anvil
+  Sparkles,
+  Anvil,
+  MessageSquare
 } from "lucide-react"
 
 // Import the dedicated stylesheet
 import "../styles/Home.css"
+
 const Home = () => {
   const navigate = useNavigate()
 
@@ -54,12 +55,12 @@ const Home = () => {
                 Log in
               </button>
               <button 
-  onClick={() => navigate("/signup")} 
-  className="btn btn-primary"
-  style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
->
-  Get Started
-</button>
+                onClick={() => navigate("/signup")} 
+                className="btn btn-primary"
+                style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              >
+                Get Started
+              </button>
             </div>
           </div>
         </div>
@@ -81,18 +82,18 @@ const Home = () => {
             </h1>
 
             <p className="hero-desc">
-              A complete ecosystem for developers. Build ATS-friendly resumes, 
-              find curated jobs, and master interviews with 1-on-1 mentorship.
+              Tools that actually help. Extract keywords from any Job Description, 
+              score your resume against top companies, and master DSA with curated sheets.
             </p>
 
             <div className="hero-cta">
               <button 
-  className="btn btn-primary btn-lg" 
-  onClick={() => navigate("/signup")}
-  style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
->
-  Start Preparing Now <ArrowRight size={20} style={{ marginLeft: '8px', color: '#ffffff' }} />
-</button>
+                className="btn btn-primary btn-lg" 
+                onClick={() => navigate("/signup")}
+                style={{ backgroundColor: '#dc2626', color: '#ffffff' }}
+              >
+                Start Preparing Now <ArrowRight size={20} style={{ marginLeft: '8px', color: '#ffffff' }} />
+              </button>
               <button className="btn btn-outline btn-lg" onClick={() => navigate("/jobs")}>
                 Explore Jobs
               </button>
@@ -106,10 +107,10 @@ const Home = () => {
       <div className="stats-strip">
         <div className="container">
           <div className="stats-grid">
-            <Stat number="10k+" label="Students Placed" />
-            <Stat number="500+" label="Top Companies" />
-            <Stat number="1M+" label="Resumes Created" />
-            <Stat number="4.9/5" label="User Rating" />
+            <Stat number="1.5k+" label="Resumes Scanned" />
+            <Stat number="100+" label="Jobs Posted" />
+            <Stat number="1k+" label="Daily Learners" />
+            <Stat number="4" label="Currated Sheets" />
           </div>
         </div>
       </div>
@@ -118,9 +119,9 @@ const Home = () => {
       <section id="features" className="features-section">
         <div className="container">
           <div className="section-header">
-            <h2 className="section-title">Why CareerAnvil?</h2>
+            <h2 className="section-title">Everything You Need</h2>
             <p className="hero-desc" style={{ fontSize: '1.1rem', margin: 0 }}>
-              We provide the tools you need to stand out in a crowded job market.
+               From application to preparation, we've got you covered.
             </p>
           </div>
 
@@ -132,34 +133,35 @@ const Home = () => {
             variants={staggerContainer}
           >
             <FeatureCard 
-              icon={<FileText size={24} />}
-              title="ATS Resume Builder"
-              desc="Create professional, ATS-optimized resumes in minutes using our LaTeX-powered engine."
-            />
-            <FeatureCard 
               icon={<Briefcase size={24} />}
-              title="Curated Job Feed"
-              desc="Stop scrolling endlessly. Get verified job listings from top product-based companies."
+              title="Curated Job Board"
+              desc="Verified listings from top product-based companies. Filter by role, type, and eligibility."
             />
             <FeatureCard 
               icon={<FileSearch size={24} />}
-              title="Resume Analysis"
-              desc="AI-driven feedback on your resume. Identify missing keywords and formatting errors."
+              title="AI Resume Scanner"
+              desc="Check your resume's ATS score. See exactly how you match against companies like Google & Amazon."
+            />
+            <FeatureCard 
+              icon={<Sparkles size={24} />}
+              title="JD Keyword Extractor"
+              desc="Paste any Job Description to instantly extract the top 40 keywords you need to include in your resume."
             />
             <FeatureCard 
               icon={<Code2 size={24} />}
               title="DSA Sheets"
-              desc="Track your progress on curated DSA problems. Structured roadmaps to master coding."
+              desc="Structured roadmaps for Data Structures & Algorithms. Track your progress topic by topic."
             />
             <FeatureCard 
               icon={<Users size={24} />}
               title="Mock Interviews"
-              desc="Practice with peers or book 1:1 sessions with mentors from FAANG companies."
+              desc="Practice technical interviews with peers or AI. Get feedback on your communication and logic."
+              badge="Coming Soon"
             />
             <FeatureCard 
-              icon={<Rocket size={24} />}
-              title="Application Tracker"
-              desc="Keep track of all your applications in one place. Never miss a follow-up."
+              icon={<MessageSquare size={24} />}
+              title="1:1 Mentorship"
+              desc="Book sessions with mentors from top tech companies for career guidance and resume reviews."
             />
           </motion.div>
         </div>
@@ -170,7 +172,7 @@ const Home = () => {
         <div className="container cta-content">
           <h2 className="cta-title">Ready to launch your career?</h2>
           <p className="cta-text">
-            Join thousands of developers who have secured their dream jobs using CareerAnvil.
+            Join thousands of developers who are optimizing their prep with CareerAnvil.
           </p>
           <button className="btn btn-primary btn-lg" onClick={() => navigate("/signup")}>
             Get Started for Free
@@ -205,9 +207,24 @@ const Home = () => {
 
 // --- Sub Components ---
 
-const FeatureCard = ({ icon, title, desc }) => (
+const FeatureCard = ({ icon, title, desc, badge }) => (
   <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-    <div className="feature-card">
+    <div className="feature-card" style={{ position: 'relative' }}>
+      {badge && (
+        <span style={{ 
+          position: 'absolute', 
+          top: '12px', 
+          right: '12px', 
+          fontSize: '0.7rem', 
+          background: '#fef3c7', 
+          color: '#d97706', 
+          padding: '2px 8px', 
+          borderRadius: '12px', 
+          fontWeight: 600 
+        }}>
+          {badge}
+        </span>
+      )}
       <div className="icon-wrapper">
         {icon}
       </div>
