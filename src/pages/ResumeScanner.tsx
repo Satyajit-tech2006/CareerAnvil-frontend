@@ -293,7 +293,7 @@ export default function ResumeScanner() {
                           variant="secondary" 
                           size="sm" 
                           className="shadow-lg gap-2 cursor-pointer z-10 hover:bg-primary hover:text-primary-foreground transition-all" 
-                          onClick={() => navigate('/planning')}
+                          onClick={() => navigate('/pricing')}
                         >
                            <Lock className="w-3.5 h-3.5" /> Unlock Feature
                         </Button>
@@ -499,7 +499,7 @@ export default function ResumeScanner() {
                                       <h4 className="font-bold text-sm">Unlock Company Scores</h4>
                                       <p className="text-xs text-muted-foreground mt-1">See exactly how your resume scores against Google, Amazon, & more.</p>
                                    </div>
-                                   <Button size="sm" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" onClick={() => navigate('/planning')}>
+                                   <Button size="sm" className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white border-0" onClick={() => navigate('/pricing')}>
                                       Upgrade to Reveal
                                    </Button>
                                 </div>

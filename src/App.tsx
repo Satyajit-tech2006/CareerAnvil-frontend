@@ -14,17 +14,19 @@ import NotFound from "./pages/NotFound";
 import AuthSuccess from "./pages/AuthSuccess";
 import JobDescriptionScanner from '@/pages/JobDescriptionScanner';
 import Settings from '@/pages/Settings';
+import Pricing from "@/pages/Pricing"; // <--- NEW: Pricing Page
 
 // --- LEARNING PAGES ---
 import SheetLibrary from "./pages/SheetLibrary"; // Catalog
 import SheetView from "./pages/SheetView";       // Study Interface
 import MyLearning from "./pages/MyLearning";     // User Dashboard Tab
-import NoteViewer from "./pages/NoteViewer";     // <--- NEW: Student reads notes
+import NoteViewer from "./pages/NoteViewer";     // Student reads notes
 
 // --- ADMIN PAGES ---
 import AdminSheetList from "./pages/admin/AdminSheetList";
 import AdminSheetBuilder from "./pages/admin/AdminSheetBuilder";
-import NoteBuilder from "./pages/admin/NoteBuilder"; // <--- NEW: Admin writes notes
+import NoteBuilder from "./pages/admin/NoteBuilder"; 
+import PaymentManager from "./pages/admin/PaymentManager"; // <--- NEW: Admin Payment Dashboard
 
 // --- AUTH ---
 import Login from "./components/Auth/Login"; 
@@ -61,6 +63,7 @@ const App = () => (
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/pricing" element={<Pricing />} /> {/* <--- Public Pricing Page */}
           <Route path="/auth-success" element={<AuthSuccess />} />
 
           {/* ==========================
@@ -79,10 +82,11 @@ const App = () => (
             <Route path="/scanner" element={<ResumeScanner />} />
             <Route path="/jd-scanner" element={<JobDescriptionScanner />} />
             <Route path="/settings" element={<Settings />} />
+            
             {/* --- Learning Ecosystem (Student View) --- */}
             <Route path="/sheets" element={<SheetLibrary />} />       {/* Browse Sheets */}
-            <Route path="/my-learning" element={<MyLearning />} />      {/* Progress Dashboard */}
-            <Route path="/sheets/:slug" element={<SheetView />} />      {/* Solve Sheet */}
+            <Route path="/my-learning" element={<MyLearning />} />     {/* Progress Dashboard */}
+            <Route path="/sheets/:slug" element={<SheetView />} />     {/* Solve Sheet */}
             <Route path="/notes/:itemId" element={<NoteViewer />} />    {/* Read Internal Note */}
 
             {/* --- Admin Ecosystem (Builder View) --- */}
@@ -90,6 +94,7 @@ const App = () => (
             <Route path="/admin/sheets" element={<AdminSheetList />} />
             <Route path="/admin/sheets/:id/builder" element={<AdminSheetBuilder />} />
             <Route path="/admin/notes/:itemId" element={<NoteBuilder />} />
+            <Route path="/admin/payments" element={<PaymentManager />} /> {/* <--- Admin Payments */}
           </Route>
 
           {/* --- CATCH ALL --- */}

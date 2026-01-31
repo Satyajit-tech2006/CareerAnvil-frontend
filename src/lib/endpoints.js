@@ -70,5 +70,14 @@ export const ENDPOINTS = {
     ANALYZE: '/ats/analyze',
     EXTRACT_KEYWORDS: '/ats/extract-keywords',
     GET_CREDITS: '/ats/credits',
+  },
+
+  // --- PAYMENTS (NEW) ---
+  PAYMENTS: {
+    INITIATE: '/payments/initiate',       // POST
+    SUBMIT_UTR: '/payments/submit-utr',   // POST
+    GET_ACTIVE: '/payments/active',       // GET
+    ADMIN_VERIFY: '/payments/admin/verify', // POST (Admin)
+    ADMIN_GET_ALL: (status) => `/payments/admin/all?status=${status}` // GET (Admin)
   }
 };
