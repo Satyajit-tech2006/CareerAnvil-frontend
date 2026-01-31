@@ -78,7 +78,7 @@ const App = () => (
             <Route path="/scanner" element={<ResumeScanner />} />
             <Route path="/jd-scanner" element={<JobDescriptionScanner />} />
             {/* --- Learning Ecosystem (Student View) --- */}
-            <Route path="/roadmaps" element={<SheetLibrary />} />       {/* Browse Sheets */}
+            <Route path="/sheets" element={<SheetLibrary />} />       {/* Browse Sheets */}
             <Route path="/my-learning" element={<MyLearning />} />      {/* Progress Dashboard */}
             <Route path="/sheets/:slug" element={<SheetView />} />      {/* Solve Sheet */}
             <Route path="/notes/:itemId" element={<NoteViewer />} />    {/* Read Internal Note */}
