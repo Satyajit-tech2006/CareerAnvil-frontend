@@ -78,6 +78,7 @@ export const ENDPOINTS = {
     SUBMIT_UTR: '/payments/submit-utr',   // POST
     GET_ACTIVE: '/payments/active',       // GET
     ADMIN_VERIFY: '/payments/admin/verify', // POST (Admin)
-    ADMIN_GET_ALL: (status) => `/payments/admin/all?status=${status}` // GET (Admin)
+    ADMIN_GET_ALL: (status) => `/payments/admin/all?status=${status}`, // GET (Admin)
+    ADMIN_CLEANUP: '/payments/admin/cleanup', // POST (Admin) <--- NEW
   }
 };
