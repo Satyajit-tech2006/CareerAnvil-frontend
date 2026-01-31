@@ -8,32 +8,35 @@ import { toast } from "sonner";
 import apiClient from "@/lib/api";
 
 interface PaymentModalProps {
-  plan: "premium" | "premium_pro" | null;
+  plan: "premium" | null;
+  billingCycle: "monthly" | "yearly"; // <--- NEW PROP
   isOpen: boolean;
   onClose: () => void;
 }
 
 // --- CONFIGURATION ---
 const UPI_ID = "7656999488@ybl";
-const QR_IMAGE_PATH = "/UPI_QR.jpeg"; // Assumes file is in 'public' folder
+const QR_IMAGE_PATH = "/UPI_QR.jpeg"; 
 
-export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProps) {
+export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: PaymentModalProps) {
   const [step, setStep] = useState<"loading" | "scan" | "utr" | "success">("loading");
   const [paymentId, setPaymentId] = useState<string | null>(null);
   const [utr, setUtr] = useState("");
   
   const queryClient = useQueryClient();
-  const amount = plan === "premium_pro" ? 499 : 299;
+
+  // --- DYNAMIC AMOUNT CALCULATION ---
+  const amount = billingCycle === "yearly" ? 999 : 99;
 
   // 1. Initiate Payment on Open
   const { mutate: initiate } = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.post("/payments/initiate", { plan });
+      // Send billingCycle to backend so it sets correct amount (99 or 999)
+      const res = await apiClient.post("/payments/initiate", { plan, billingCycle });
       return res.data.data;
     },
     onSuccess: (data) => {
       setPaymentId(data._id);
-      // If user already submitted UTR, go to success/waiting
       if (data.status === "pending_verification") {
         setStep("success");
       } else {
@@ -41,10 +44,7 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
       }
     },
     onError: (err: any) => {
-      // If user has active payment, backend returns it (200 OK) usually, 
-      // but if error 409, we handle it.
       const msg = err.response?.data?.message || "Failed to initiate";
-      // If it's the "already has payment" error, we might want to let them close
       if(err.response?.status === 409) {
           toast.error(msg);
           onClose();
@@ -59,7 +59,7 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
       setStep("loading");
       initiate();
     }
-  }, [isOpen, plan]);
+  }, [isOpen, plan, billingCycle]);
 
   // 2. Submit UTR
   const { mutate: submit, isPending: isSubmitting } = useMutation({
@@ -75,14 +75,16 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
   });
 
   // Deep link for mobile UPI apps
-  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=CareerAnvil&am=${amount}&tn=${plan === 'premium' ? 'Premium Upgrade' : 'Pro Upgrade'}&cu=INR`;
+  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=CareerAnvil&am=${amount}&tn=${plan} ${billingCycle}&cu=INR`;
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Complete Payment</DialogTitle>
-          <DialogDescription>Upgrade to {plan === 'premium' ? 'Premium' : 'Pro'}</DialogDescription>
+          <DialogDescription>
+             Upgrade to Premium ({billingCycle === 'yearly' ? 'Yearly' : 'Monthly'})
+          </DialogDescription>
         </DialogHeader>
 
         {step === "loading" && (
@@ -100,7 +102,7 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
                 alt="Scan UPI QR" 
                 className="w-56 h-auto object-contain"
                 onError={(e) => {
-                    // Fallback if image not found
+                    // Fallback generator
                     (e.target as HTMLImageElement).src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mobileDeepLink)}`;
                 }}
               />
@@ -108,7 +110,7 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
             </div>
             
             <div className="text-center space-y-1">
-              <p className="text-2xl font-bold">₹{amount}</p>
+              <p className="text-3xl font-bold">₹{amount}</p>
               <div className="flex items-center justify-center gap-2">
                 <span className="text-sm text-muted-foreground font-mono bg-muted px-2 py-1 rounded select-all">
                     {UPI_ID}
@@ -132,8 +134,7 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
              <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-md flex gap-2 border border-amber-100">
                 <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
                 <p>
-                    <strong>Important:</strong> Please check your banking app (PhonePe/GPay/Paytm) 
-                    history for the <strong>12-digit UTR</strong> or <strong>Transaction Reference No</strong>.
+                    <strong>Important:</strong> Check your banking app for the <strong>12-digit UTR</strong>.
                 </p>
              </div>
              
@@ -142,11 +143,11 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
                 <Input 
                    placeholder="e.g. 302848192039" 
                    value={utr} 
-                   onChange={(e) => setUtr(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} // Clean input
+                   onChange={(e) => setUtr(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))}
                    maxLength={22}
                    className="font-mono tracking-wide"
                 />
-                <p className="text-xs text-muted-foreground text-right">{utr.length}/12 characters (min)</p>
+                <p className="text-xs text-muted-foreground text-right">{utr.length}/12 characters</p>
              </div>
 
              <div className="flex flex-col gap-3 pt-2">
@@ -167,7 +168,7 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
               <div className="space-y-2">
                  <h3 className="text-xl font-bold">Payment Submitted!</h3>
                  <p className="text-sm text-muted-foreground max-w-[260px] mx-auto">
-                    We have received your UTR details. Your account will be upgraded automatically after admin verification (approx 1-2 hours).
+                    We have received your UTR. Account activation typically takes 1-2 hours.
                  </p>
               </div>
               <Button onClick={onClose} className="w-full max-w-[200px]">Close</Button>
