@@ -11,7 +11,7 @@ import {
   Anvil,
   Layers,          
   Sparkles,        
-  FileSearch,      // Added for Resume Scanner
+  FileSearch,      
   Database,      
   Lock           
 } from 'lucide-react';
@@ -46,8 +46,8 @@ interface SidebarContentProps {
 const userNavItems = [
   { icon: LayoutDashboard, label: 'My Learning', path: '/dashboard' },
   { icon: Briefcase, label: 'Job Board', path: '/jobs' },
-  { icon: FileSearch, label: 'Resume Scanner', path: '/scanner' },  // Added Resume Scanner
-  { icon: Layers, label: 'Sheets', path: '/sheets' },               // Renamed DSA Sheets -> Sheets
+  { icon: FileSearch, label: 'Resume Scanner', path: '/scanner' },  
+  { icon: Layers, label: 'Sheets', path: '/sheets' },               
   { icon: Sparkles, label: 'JD Extractor', path: '/jd-scanner' },
 ];
 
@@ -97,6 +97,8 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
       </NavLink>
     );
   };
+
+  const isSettingsActive = location.pathname === '/settings';
 
   return (
     <div className="flex flex-col h-full bg-card border-r border-border">
@@ -148,13 +150,20 @@ function SidebarContent({ collapsed, onToggle, user, onLogout }: SidebarContentP
 
       {/* Footer */}
       <div className="p-3 border-t border-border space-y-1">
-        <button className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors",
-          "text-muted-foreground hover:bg-accent hover:text-accent-foreground group"
-        )}>
-          <Settings className="w-5 h-5 flex-shrink-0 group-hover:text-foreground" />
+        
+        {/* Settings Button (Updated to NavLink) */}
+        <NavLink
+          to="/settings"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2.5 rounded-lg w-full transition-colors",
+            isSettingsActive 
+              ? "bg-primary/10 text-primary font-medium" 
+              : "text-muted-foreground hover:bg-accent hover:text-accent-foreground group"
+          )}
+        >
+          <Settings className={cn("w-5 h-5 flex-shrink-0 transition-colors", isSettingsActive ? "text-primary" : "group-hover:text-foreground")} />
           {!collapsed && <span>Settings</span>}
-        </button>
+        </NavLink>
         
         <button 
           onClick={onLogout}
