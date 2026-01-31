@@ -27,7 +27,7 @@ export default function PaymentModal({ plan, billingCycle, isOpen, onClose }: Pa
   const queryClient = useQueryClient();
 
   // --- DYNAMIC AMOUNT (Testing: ₹1.00) ---
-  const rawAmount = billingCycle === "yearly" ? 999 : 1;
+  const rawAmount = billingCycle === "yearly" ? 999 : 10;
   const amountString = rawAmount.toFixed(2); // "1.00"
 
   // --- SIMPLEST COMPATIBLE UPI LINK (P2P) ---
