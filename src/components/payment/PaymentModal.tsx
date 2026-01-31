@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, QrCode, CheckCircle2, Copy, AlertTriangle } from "lucide-react";
+import { Loader2, CheckCircle2, AlertTriangle, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import apiClient from "@/lib/api";
-import { ENDPOINTS } from "@/lib/endpoints";
 
 interface PaymentModalProps {
   plan: "premium" | "premium_pro" | null;
@@ -14,7 +13,9 @@ interface PaymentModalProps {
   onClose: () => void;
 }
 
-const UPI_ID = "yourname@okaxis"; // CHANGE THIS
+// --- CONFIGURATION ---
+const UPI_ID = "7656999488@ybl";
+const QR_IMAGE_PATH = "/UPI_QR.jpeg"; // Assumes file is in 'public' folder
 
 export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProps) {
   const [step, setStep] = useState<"loading" | "scan" | "utr" | "success">("loading");
@@ -42,8 +43,14 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
     onError: (err: any) => {
       // If user has active payment, backend returns it (200 OK) usually, 
       // but if error 409, we handle it.
-      toast.error(err.response?.data?.message || "Failed to initiate");
-      onClose();
+      const msg = err.response?.data?.message || "Failed to initiate";
+      // If it's the "already has payment" error, we might want to let them close
+      if(err.response?.status === 409) {
+          toast.error(msg);
+          onClose();
+      } else {
+          toast.error(msg);
+      }
     }
   });
 
@@ -61,13 +68,14 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
     },
     onSuccess: () => {
       setStep("success");
-      toast.success("UTR Submitted!");
+      toast.success("UTR Submitted successfully!");
       queryClient.invalidateQueries({ queryKey: ['activePayment'] });
     },
-    onError: (err: any) => toast.error(err.response?.data?.message)
+    onError: (err: any) => toast.error(err.response?.data?.message || "Failed to submit UTR")
   });
 
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=upi://pay?pa=${UPI_ID}&pn=CareerAnvil&am=${amount}&tn=${plan}`;
+  // Deep link for mobile UPI apps
+  const mobileDeepLink = `upi://pay?pa=${UPI_ID}&pn=CareerAnvil&am=${amount}&tn=${plan === 'premium' ? 'Premium Upgrade' : 'Pro Upgrade'}&cu=INR`;
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
@@ -78,72 +86,91 @@ export default function PaymentModal({ plan, isOpen, onClose }: PaymentModalProp
         </DialogHeader>
 
         {step === "loading" && (
-          <div className="flex justify-center py-8">
+          <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
         )}
 
         {step === "scan" && (
-          <div className="space-y-4">
-            <div className="bg-white p-4 rounded-xl border flex justify-center">
-              <img src={qrUrl} alt="QR Code" className="w-48 h-48 mix-blend-multiply" />
+          <div className="space-y-6">
+            <div className="bg-white p-4 rounded-xl border flex flex-col items-center justify-center shadow-sm">
+              {/* LOCAL QR IMAGE */}
+              <img 
+                src={QR_IMAGE_PATH} 
+                alt="Scan UPI QR" 
+                className="w-56 h-auto object-contain"
+                onError={(e) => {
+                    // Fallback if image not found
+                    (e.target as HTMLImageElement).src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(mobileDeepLink)}`;
+                }}
+              />
+              <p className="mt-2 text-xs text-muted-foreground">Scan with any UPI App</p>
             </div>
             
             <div className="text-center space-y-1">
-              <p className="font-bold text-lg">₹{amount}</p>
-              <p className="text-xs text-muted-foreground font-mono bg-muted inline-block px-2 py-1 rounded">
-                {UPI_ID}
-              </p>
+              <p className="text-2xl font-bold">₹{amount}</p>
+              <div className="flex items-center justify-center gap-2">
+                <span className="text-sm text-muted-foreground font-mono bg-muted px-2 py-1 rounded select-all">
+                    {UPI_ID}
+                </span>
+              </div>
             </div>
 
-            <div className="flex gap-2">
-               <Button className="w-full" variant="outline" onClick={() => window.location.href = `upi://pay?pa=${UPI_ID}&pn=CareerAnvil&am=${amount}&tn=${plan}`}>
-                 Open UPI App
+            <div className="grid grid-cols-2 gap-3">
+               <Button variant="outline" onClick={() => window.location.href = mobileDeepLink} className="w-full">
+                 Open App
                </Button>
-               <Button className="w-full" onClick={() => setStep("utr")}>
-                 Enter UTR
+               <Button onClick={() => setStep("utr")} className="w-full">
+                 Enter UTR <ArrowRight className="w-4 h-4 ml-2" />
                </Button>
             </div>
           </div>
         )}
 
         {step === "utr" && (
-          <div className="space-y-4">
-             <div className="bg-blue-50 text-blue-700 text-xs p-3 rounded flex gap-2">
-                <AlertTriangle className="w-4 h-4 shrink-0" />
-                <p>Please check your banking app for the 12-digit UTR or Reference Number after payment.</p>
+          <div className="space-y-5">
+             <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-md flex gap-2 border border-amber-100">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>
+                    <strong>Important:</strong> Please check your banking app (PhonePe/GPay/Paytm) 
+                    history for the <strong>12-digit UTR</strong> or <strong>Transaction Reference No</strong>.
+                </p>
              </div>
              
-             <div className="space-y-2">
-                <label className="text-sm font-medium">Transaction ID / UTR</label>
+             <div className="space-y-3">
+                <label className="text-sm font-medium">Enter Transaction ID / UTR</label>
                 <Input 
                    placeholder="e.g. 302848192039" 
                    value={utr} 
-                   onChange={(e) => setUtr(e.target.value)}
+                   onChange={(e) => setUtr(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} // Clean input
                    maxLength={22}
+                   className="font-mono tracking-wide"
                 />
+                <p className="text-xs text-muted-foreground text-right">{utr.length}/12 characters (min)</p>
              </div>
 
-             <Button className="w-full" onClick={() => submit()} disabled={isSubmitting || utr.length < 12}>
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Payment"}
-             </Button>
-             
-             <Button variant="ghost" className="w-full" onClick={() => setStep("scan")}>Back to QR</Button>
+             <div className="flex flex-col gap-3 pt-2">
+                <Button className="w-full" onClick={() => submit()} disabled={isSubmitting || utr.length < 12}>
+                    {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Payment"}
+                </Button>
+                
+                <Button variant="ghost" size="sm" onClick={() => setStep("scan")}>Back to QR Code</Button>
+             </div>
           </div>
         )}
 
         {step === "success" && (
-           <div className="text-center py-6 space-y-4">
-              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
-                 <CheckCircle2 className="w-8 h-8" />
+           <div className="text-center py-8 space-y-5">
+              <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto animate-in zoom-in duration-300">
+                 <CheckCircle2 className="w-10 h-10" />
               </div>
-              <div>
-                 <h3 className="text-lg font-bold">Verification Pending</h3>
-                 <p className="text-sm text-muted-foreground mt-1">
-                    We have received your UTR. Your account will be upgraded within 1-2 hours after manual verification.
+              <div className="space-y-2">
+                 <h3 className="text-xl font-bold">Payment Submitted!</h3>
+                 <p className="text-sm text-muted-foreground max-w-[260px] mx-auto">
+                    We have received your UTR details. Your account will be upgraded automatically after admin verification (approx 1-2 hours).
                  </p>
               </div>
-              <Button onClick={onClose} className="w-full">Close</Button>
+              <Button onClick={onClose} className="w-full max-w-[200px]">Close</Button>
            </div>
         )}
 
