@@ -153,7 +153,7 @@ export default function Pricing() {
                           animate={{ opacity: 1, y: 0 }} 
                           className="text-5xl font-extrabold tracking-tight"
                         >
-                           {billingCycle === 'monthly' ? '₹99' : '₹999'}
+                           {billingCycle === 'monthly' ? '₹79' : '₹749'}
                         </motion.span>
                         <span className="text-muted-foreground font-medium text-lg">
                            / {billingCycle === 'monthly' ? 'month' : 'year'}
