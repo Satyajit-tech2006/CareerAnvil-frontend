@@ -65,7 +65,9 @@ export const ENDPOINTS = {
     SAVE: '/notes',                        // POST /api/v1/notes (Upsert)
   },
 
+  // --- ATS & KEYWORDS ---
   ATS: {
-    ANALYZE: '/ats/analyze',  // POST /api/v1/ats/analyze
+    ANALYZE: '/ats/analyze',               // POST /api/v1/ats/analyze
+    EXTRACT_KEYWORDS: '/ats/extract-keywords', // POST /api/v1/ats/extract-keywords
   }
 };

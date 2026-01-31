@@ -10,9 +10,9 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import JobBoard from "./pages/JobBoard";
 import ResumeScanner from "./pages/ResumeScanner";
-import ResumeBuilder from "./pages/ResumeBuilder";
 import NotFound from "./pages/NotFound";
 import AuthSuccess from "./pages/AuthSuccess";
+import JobDescriptionScanner from '@/pages/JobDescriptionScanner';
 
 // --- LEARNING PAGES ---
 import SheetLibrary from "./pages/SheetLibrary"; // Catalog
@@ -76,8 +76,7 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/jobs" element={<JobBoard />} />
             <Route path="/scanner" element={<ResumeScanner />} />
-            <Route path="/builder" element={<ResumeBuilder />} />
-            
+            <Route path="/jd-scanner" element={<JobDescriptionScanner />} />
             {/* --- Learning Ecosystem (Student View) --- */}
             <Route path="/roadmaps" element={<SheetLibrary />} />       {/* Browse Sheets */}
             <Route path="/my-learning" element={<MyLearning />} />      {/* Progress Dashboard */}
