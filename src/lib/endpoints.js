@@ -5,9 +5,9 @@ export const ENDPOINTS = {
     LOGIN: '/users/login',
     LOGOUT: '/users/logout',
     REFRESH_TOKEN: '/users/refresh-token',
-    CHANGE_PASSWORD: '/users/change-password',
-    FORGOT_PASSWORD: '/users/forgot-password',
-    RESET_PASSWORD: (token) => `/users/reset-password/${token}`,
+    CHANGE_PASSWORD: '/users/change-password', // Requires Old Password
+    FORGOT_PASSWORD: '/users/forgot-password', // Sends OTP
+    RESET_PASSWORD: '/users/reset-password',   // Verify OTP + New Password
     CURRENT_USER: '/users/current-user',
     UPDATE_PROFILE: '/users/update-profile',
     GOOGLE_AUTH: '/users/auth/google',
@@ -15,61 +15,60 @@ export const ENDPOINTS = {
 
   // --- JOB BOARD ---
   JOBS: {
-    GET_ALL: '/jobs',                      // GET /api/v1/jobs
-    CREATE: '/jobs/create',                // POST /api/v1/jobs/create (Admin only)
-    UPDATE: (id) => `/jobs/${id}`,         // PATCH /api/v1/jobs/:id (Admin only)
-    DELETE: (id) => `/jobs/${id}`,         // DELETE /api/v1/jobs/:id (Admin only)
-    CLEANUP: '/jobs/cleanup/expired',      // DELETE /api/v1/jobs/cleanup/expired (Admin only)
+    GET_ALL: '/jobs',
+    CREATE: '/jobs/create',
+    UPDATE: (id) => `/jobs/${id}`,
+    DELETE: (id) => `/jobs/${id}`,
+    CLEANUP: '/jobs/cleanup/expired',
   },
 
-  // --- DSA SHEETS (The Roadmaps) ---
+  // --- DSA SHEETS ---
   SHEETS: {
-    GET_ALL: '/sheets',                    // GET /api/v1/sheets
-    GET_BY_SLUG: (slug) => `/sheets/${slug}`, // GET /api/v1/sheets/:slug
-    CREATE: '/sheets',                     // POST /api/v1/sheets (Admin only)
-    UPDATE: (id) => `/sheets/${id}`,       // PATCH /api/v1/sheets/:id (Admin only)
-    DELETE: (id) => `/sheets/${id}`,       // DELETE /api/v1/sheets/:id (Admin only)
+    GET_ALL: '/sheets',
+    GET_BY_SLUG: (slug) => `/sheets/${slug}`,
+    CREATE: '/sheets',
+    UPDATE: (id) => `/sheets/${id}`,
+    DELETE: (id) => `/sheets/${id}`,
   },
 
-  // --- SECTIONS (Topics inside a Sheet) ---
+  // --- SECTIONS ---
   SECTIONS: {
-    GET_BY_SHEET: (sheetId) => `/sections/sheet/${sheetId}`, // GET /api/v1/sections/sheet/:sheetId
-    CREATE: '/sections',                   // POST /api/v1/sections (Admin only)
-    UPDATE: (id) => `/sections/${id}`,     // PATCH /api/v1/sections/:id (Admin only)
-    DELETE: (id) => `/sections/${id}`,     // DELETE /api/v1/sections/:id (Admin only)
+    GET_BY_SHEET: (sheetId) => `/sections/sheet/${sheetId}`,
+    CREATE: '/sections',
+    UPDATE: (id) => `/sections/${id}`,
+    DELETE: (id) => `/sections/${id}`,
   },
 
-  // --- ITEMS (Questions/Resources inside a Section) ---
+  // --- ITEMS ---
   ITEMS: {
-    GET_BY_SECTION: (sectionId) => `/items/section/${sectionId}`, // GET /api/v1/items/section/:sectionId
-    CREATE: '/items',                      // POST /api/v1/items (Admin only)
-    UPDATE: (id) => `/items/${id}`,        // PATCH /api/v1/items/:id (Admin only)
-    DELETE: (id) => `/items/${id}`,        // DELETE /api/v1/items/:id (Admin only)
+    GET_BY_SECTION: (sectionId) => `/items/section/${sectionId}`,
+    CREATE: '/items',
+    UPDATE: (id) => `/items/${id}`,
+    DELETE: (id) => `/items/${id}`,
   },
 
-  // --- ENROLLMENT (User tracking a Sheet) ---
+  // --- ENROLLMENT ---
   ENROLLMENT: {
-    ENROLL: '/enrollments',                // POST /api/v1/enrollments (Start a sheet)
-    MY_SHEETS: '/enrollments/my-sheets',   // GET /api/v1/enrollments/my-sheets (Dashboard list)
+    ENROLL: '/enrollments',
+    MY_SHEETS: '/enrollments/my-sheets',
   },
 
-  // --- PROGRESS (Tracking checkboxes) ---
+  // --- PROGRESS ---
   PROGRESS: {
-    TOGGLE: '/progress/toggle',            // POST /api/v1/progress/toggle (Mark done/todo)
-    GET_SHEET_PROGRESS: (sheetId) => `/progress/${sheetId}`, // GET /api/v1/progress/:sheetId
+    TOGGLE: '/progress/toggle',
+    GET_SHEET_PROGRESS: (sheetId) => `/progress/${sheetId}`,
   },
 
-  // --- NOTES (Rich Text Content) ---
+  // --- NOTES ---
   NOTES: {
-    GET: (itemId) => `/notes/${itemId}`,   // GET /api/v1/notes/:itemId
-    SAVE: '/notes',                        // POST /api/v1/notes (Upsert)
+    GET: (itemId) => `/notes/${itemId}`,
+    SAVE: '/notes',
   },
 
   // --- ATS & KEYWORDS ---
   ATS: {
-    ANALYZE: '/ats/analyze',               // POST /api/v1/ats/analyze
-    EXTRACT_KEYWORDS: '/ats/extract-keywords', // POST /api/v1/ats/extract-keywords
-    GET_CREDITS: '/ats/credits',           // GET /api/v1/ats/credits
-  
+    ANALYZE: '/ats/analyze',
+    EXTRACT_KEYWORDS: '/ats/extract-keywords',
+    GET_CREDITS: '/ats/credits',
   }
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { 
-  User, Shield, Save, Loader2, Mail, AtSign, KeyRound, CheckCircle2 
+  User, Shield, Save, Loader2, Mail, AtSign, KeyRound, CheckCircle2, AlertCircle 
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import apiClient from '@/lib/api';
 import { ENDPOINTS } from '@/lib/endpoints';
@@ -22,6 +23,11 @@ export default function Settings() {
   // --- STATE ---
   const [profileForm, setProfileForm] = useState({ name: '', username: '' });
   const [passwordForm, setPasswordForm] = useState({ oldPassword: '', newPassword: '' });
+  
+  // Forgot Password State
+  const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
+  const [resetOtp, setResetOtp] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
 
   // 1. Fetch Current User Data
   const { data: user, isLoading } = useQuery({
@@ -50,8 +56,7 @@ export default function Settings() {
     },
     onSuccess: (data) => {
       toast.success("Profile updated successfully");
-      queryClient.setQueryData(['currentUser'], data); // Optimistic update
-      // Update local storage for sidebar consistency
+      queryClient.setQueryData(['currentUser'], data);
       localStorage.setItem('user', JSON.stringify(data));
     },
     onError: (err: any) => {
@@ -59,7 +64,7 @@ export default function Settings() {
     }
   });
 
-  // 3. Mutation: Change Password
+  // 3. Mutation: Change Password (Standard)
   const { mutate: changePassword, isPending: isChangingPassword } = useMutation({
     mutationFn: async (data: typeof passwordForm) => {
       await apiClient.post(ENDPOINTS.USERS.CHANGE_PASSWORD, data);
@@ -70,6 +75,41 @@ export default function Settings() {
     },
     onError: (err: any) => {
       toast.error(err.response?.data?.message || "Failed to change password");
+    }
+  });
+
+  // 4. Mutation: Send OTP (Start Reset Flow)
+  const { mutate: sendOtp, isPending: isSendingOtp } = useMutation({
+    mutationFn: async () => {
+      if (!user?.email) throw new Error("User email not found");
+      await apiClient.post(ENDPOINTS.USERS.FORGOT_PASSWORD, { email: user.email });
+    },
+    onSuccess: () => {
+      toast.success(`OTP sent to ${user?.email}`);
+      setIsResetDialogOpen(true); // Open Dialog
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to send OTP");
+    }
+  });
+
+  // 5. Mutation: Reset Password (Verify OTP)
+  const { mutate: resetPasswordWithOtp, isPending: isResetting } = useMutation({
+    mutationFn: async () => {
+      await apiClient.post(ENDPOINTS.USERS.RESET_PASSWORD, { 
+        email: user?.email, 
+        otp: resetOtp, 
+        newPassword: resetNewPassword 
+      });
+    },
+    onSuccess: () => {
+      toast.success("Password has been reset!");
+      setIsResetDialogOpen(false);
+      setResetOtp('');
+      setResetNewPassword('');
+    },
+    onError: (err: any) => {
+      toast.error(err.response?.data?.message || "Failed to reset password");
     }
   });
 
@@ -184,7 +224,18 @@ export default function Settings() {
           <CardContent>
             <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-lg">
                 <div className="space-y-2">
-                    <Label>Current Password</Label>
+                    <div className="flex items-center justify-between">
+                        <Label>Current Password</Label>
+                        <button 
+                            type="button"
+                            onClick={() => sendOtp()}
+                            disabled={isSendingOtp}
+                            className="text-xs text-primary hover:underline font-medium flex items-center gap-1"
+                        >
+                            {isSendingOtp && <Loader2 className="w-3 h-3 animate-spin" />}
+                            I forgot my password
+                        </button>
+                    </div>
                     <div className="relative">
                         <KeyRound className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -221,6 +272,52 @@ export default function Settings() {
         </Card>
 
       </div>
+
+      {/* --- DIALOG: RESET PASSWORD VIA OTP --- */}
+      <Dialog open={isResetDialogOpen} onOpenChange={setIsResetDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Reset Password</DialogTitle>
+                <DialogDescription>
+                    We sent a verification code to <strong>{user?.email}</strong>.
+                    Enter it below to set a new password.
+                </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                    <Label>OTP Code</Label>
+                    <Input 
+                        placeholder="123456" 
+                        value={resetOtp}
+                        onChange={(e) => setResetOtp(e.target.value)}
+                        className="text-center tracking-widest font-mono text-lg"
+                        maxLength={6}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <Label>New Password</Label>
+                    <Input 
+                        type="password"
+                        placeholder="New secure password"
+                        value={resetNewPassword}
+                        onChange={(e) => setResetNewPassword(e.target.value)}
+                    />
+                </div>
+
+                <div className="pt-2">
+                    <Button 
+                        className="w-full" 
+                        onClick={() => resetPasswordWithOtp()}
+                        disabled={isResetting || resetOtp.length < 6 || resetNewPassword.length < 6}
+                    >
+                        {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Reset"}
+                    </Button>
+                </div>
+            </div>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
