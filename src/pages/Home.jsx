@@ -108,9 +108,9 @@ const Home = () => {
         <div className="container">
           <div className="stats-grid">
             <Stat number="1.5k+" label="Resumes Scanned" />
-            <Stat number="100+" label="Jobs Posted" />
-            <Stat number="1k+" label="Daily Learners" />
-            <Stat number="4" label="Currated Sheets" />
+            <Stat number="200+" label="Jobs Posted" />
+            <Stat number="100+" label="Daily Learners" />
+            <Stat number="10+" label="Currated Sheets" />
           </div>
         </div>
       </div>
