@@ -9,9 +9,11 @@ import {
   ChevronRight,
   Menu,
   Anvil,
-  Map,           // Added for Roadmaps
-  Database,      // Added for Admin
-  Lock           // Added for Admin visual cue
+  Layers,          
+  Sparkles,        
+  FileSearch,      // Added for Resume Scanner
+  Database,      
+  Lock           
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,7 +32,7 @@ interface UserData {
   username?: string;
   email: string;
   avatar?: string;
-  role?: string; // Added role to check permissions
+  role?: string; 
 }
 
 interface SidebarContentProps {
@@ -42,9 +44,11 @@ interface SidebarContentProps {
 
 // --- Navigation Configuration ---
 const userNavItems = [
-  { icon: LayoutDashboard, label: 'My Learning', path: '/dashboard' }, // Changed label to reflect content
+  { icon: LayoutDashboard, label: 'My Learning', path: '/dashboard' },
   { icon: Briefcase, label: 'Job Board', path: '/jobs' },
-  { icon: Map, label: 'Roadmaps', path: '/roadmaps' },
+  { icon: FileSearch, label: 'Resume Scanner', path: '/scanner' },  // Added Resume Scanner
+  { icon: Layers, label: 'Sheets', path: '/sheets' },               // Renamed DSA Sheets -> Sheets
+  { icon: Sparkles, label: 'JD Extractor', path: '/jd-scanner' },
 ];
 
 const adminNavItems = [
